@@ -26,5 +26,11 @@ if [ -d docs ]; then
 fi
 markdownlint "${md_files[@]}"
 
+echo "Running ShellCheck..."
+shellcheck scripts/*.sh .githooks/*
+
+echo "Running actionlint..."
+actionlint
+
 echo "Fast check passed."
 

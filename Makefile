@@ -1,4 +1,4 @@
-.PHONY: bootstrap hooks doctor fast check build release test lint format markdownlint python-tools-check preview preview-version gh-harden run clean
+.PHONY: bootstrap hooks doctor fast check build release test lint format markdownlint python-tools-check shellcheck actionlint quality preview preview-version gh-harden run clean
 
 bootstrap:
 	scripts/bootstrap.sh
@@ -27,6 +27,14 @@ test:
 lint:
 	swift-format lint --strict --recursive Sources Tests
 	swiftlint lint --strict
+
+shellcheck:
+	shellcheck scripts/*.sh .githooks/*
+
+actionlint:
+	actionlint
+
+quality: lint markdownlint shellcheck actionlint python-tools-check
 
 format:
 	swift-format format --in-place --recursive Sources Tests

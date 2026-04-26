@@ -87,11 +87,10 @@ public actor TranscriptCoordinator {
 
     if !newlyCommitted.isEmpty {
       // Ensure strict monotonicity: only append segments that move forward.
-      for seg in newlyCommitted.sorted(by: { $0.startTime < $1.startTime }) {
-        if seg.endTime > lastCommittedEndTime {
-          committed.append(seg)
-          lastCommittedEndTime = max(lastCommittedEndTime, seg.endTime)
-        }
+      for seg in newlyCommitted.sorted(by: { $0.startTime < $1.startTime })
+      where seg.endTime > lastCommittedEndTime {
+        committed.append(seg)
+        lastCommittedEndTime = max(lastCommittedEndTime, seg.endTime)
       }
     }
 

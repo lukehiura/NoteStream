@@ -2673,18 +2673,17 @@ final class TranscriptionViewModel {
   }
 
   func handleDrop(providers: [NSItemProvider]) -> Bool {
-    for provider in providers {
-      if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
-          guard let data = item as? Data,
-            let url = URL(dataRepresentation: data, relativeTo: nil)
-          else { return }
-          Task { @MainActor in
-            self.startTranscription(for: url)
-          }
+    for provider in providers
+    where provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+      provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+        guard let data = item as? Data,
+          let url = URL(dataRepresentation: data, relativeTo: nil)
+        else { return }
+        Task { @MainActor in
+          self.startTranscription(for: url)
         }
-        return true
       }
+      return true
     }
     return false
   }
