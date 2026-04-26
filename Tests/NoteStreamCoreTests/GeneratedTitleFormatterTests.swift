@@ -1,21 +1,23 @@
 import Foundation
-import Testing
+import XCTest
 
 @testable import NoteStreamCore
 
-@Test func generatedTitleFormatterTrimsAndRemovesIllegalCharacters() {
-  let title = GeneratedTitleFormatter.sanitize("  Austin / Housing: Debate?  ")
-  #expect(title == "Austin Housing Debate")
-}
+final class GeneratedTitleFormatterTests: XCTestCase {
+  func testGeneratedTitleFormatterTrimsAndRemovesIllegalCharacters() {
+    let title = GeneratedTitleFormatter.sanitize("  Austin / Housing: Debate?  ")
+    XCTAssertEqual(title, "Austin Housing Debate")
+  }
 
-@Test func generatedTitleFormatterRejectsGenericTitles() {
-  #expect(GeneratedTitleFormatter.sanitize("Summary") == nil)
-  #expect(GeneratedTitleFormatter.sanitize("Recording") == nil)
-}
+  func testGeneratedTitleFormatterRejectsGenericTitles() {
+    XCTAssertNil(GeneratedTitleFormatter.sanitize("Summary"))
+    XCTAssertNil(GeneratedTitleFormatter.sanitize("Recording"))
+  }
 
-@Test func generatedTitleFormatterLimitsLength() {
-  let raw = String(repeating: "Housing ", count: 20)
-  let title = GeneratedTitleFormatter.sanitize(raw, maxLength: 20)
-  #expect(title?.hasSuffix("…") == true)
-  #expect((title?.count ?? 0) <= 21)
+  func testGeneratedTitleFormatterLimitsLength() {
+    let raw = String(repeating: "Housing ", count: 20)
+    let title = GeneratedTitleFormatter.sanitize(raw, maxLength: 20)
+    XCTAssertTrue(title?.hasSuffix("…") == true)
+    XCTAssertLessThanOrEqual(title?.count ?? 0, 21)
+  }
 }

@@ -50,8 +50,6 @@ swift run NoteStreamApp
 
 Or use the repo [Makefile](Makefile) (`make check`, `make run`). Development setup details are in `docs/development.md`.
 
-A signed, notarized macOS installer is **not** available yet; that would require an Apple Developer Program membership.
-
 ## First-time setup
 
 When you open NoteStream for the first time, follow the setup checklist:
@@ -448,8 +446,10 @@ Install Xcode, then run:
 
 ```bash
 swift build
-swift test
+make test
 ```
+
+(`make test` runs `swift test` with flags that match CI; prefer it over a bare `swift test` on Swift 6 toolchains.)
 
 ### Continuous integration
 

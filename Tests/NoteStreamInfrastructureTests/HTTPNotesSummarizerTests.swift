@@ -1,6 +1,6 @@
 import Foundation
 import NoteStreamCore
-import Testing
+import XCTest
 
 @testable import NoteStreamInfrastructure
 
@@ -61,9 +61,8 @@ private func httpBodyData(from request: URLRequest) -> Data? {
   return data
 }
 
-@Suite("HTTPNotesSummarizer", .serialized)
-struct HTTPNotesSummarizerTests {
-  @Test func ollamaParsesMessageContentJSON() async throws {
+final class HTTPNotesSummarizerTests: XCTestCase {
+  func testOllamaParsesMessageContentJSON() async throws {
     let notes = NotesSummary(
       title: "T",
       summaryMarkdown: "## Summary\nx",
@@ -71,7 +70,7 @@ struct HTTPNotesSummarizerTests {
       actionItems: [],
       openQuestions: []
     )
-    let inner = try #require(String(data: try JSONEncoder().encode(notes), encoding: .utf8))
+    let inner = try XCTUnwrap(String(data: try JSONEncoder().encode(notes), encoding: .utf8))
     let envelope: [String: Any] = [
       "message": [
         "content": inner
@@ -80,9 +79,9 @@ struct HTTPNotesSummarizerTests {
     let body = try JSONSerialization.data(withJSONObject: envelope)
 
     MockURLProtocol.handler = { request in
-      #expect(request.url?.absoluteString.contains("/api/chat") == true)
-      let url = try #require(request.url)
-      let response = try #require(
+      XCTAssertTrue(request.url?.absoluteString.contains("/api/chat") == true)
+      let url = try XCTUnwrap(request.url)
+      let response = try XCTUnwrap(
         HTTPURLResponse(
           url: url,
           statusCode: 200,
@@ -94,7 +93,7 @@ struct HTTPNotesSummarizerTests {
     }
     defer { MockURLProtocol.handler = nil }
 
-    let base = try #require(URL(string: "http://127.0.0.1:9"))
+    let base = try XCTUnwrap(URL(string: "http://127.0.0.1:9"))
     let config = HTTPNotesSummarizerConfig(
       provider: .ollama, model: "m", baseURL: base, apiKey: nil)
     let summarizer = HTTPNotesSummarizer(config: config, urlSession: makeMockSession())
@@ -107,12 +106,12 @@ struct HTTPNotesSummarizerTests {
       )
     )
 
-    #expect(out.title == notes.title)
-    #expect(out.summaryMarkdown == notes.summaryMarkdown)
-    #expect(out.keyPoints == notes.keyPoints)
+    XCTAssertEqual(out.title, notes.title)
+    XCTAssertEqual(out.summaryMarkdown, notes.summaryMarkdown)
+    XCTAssertEqual(out.keyPoints, notes.keyPoints)
   }
 
-  @Test func openAICompatibleParsesChatCompletionContent() async throws {
+  func testOpenAICompatibleParsesChatCompletionContent() async throws {
     let notes = NotesSummary(
       title: "Chat",
       summaryMarkdown: "## Summary\ny",
@@ -120,7 +119,7 @@ struct HTTPNotesSummarizerTests {
       actionItems: [],
       openQuestions: []
     )
-    let content = try #require(String(data: try JSONEncoder().encode(notes), encoding: .utf8))
+    let content = try XCTUnwrap(String(data: try JSONEncoder().encode(notes), encoding: .utf8))
     let root: [String: Any] = [
       "choices": [
         [
@@ -134,16 +133,16 @@ struct HTTPNotesSummarizerTests {
     let body = try JSONSerialization.data(withJSONObject: root)
 
     MockURLProtocol.handler = { request in
-      #expect(request.url?.path.contains("chat/completions") == true)
-      let url = try #require(request.url)
-      let response = try #require(
+      XCTAssertTrue(request.url?.path.contains("chat/completions") == true)
+      let url = try XCTUnwrap(request.url)
+      let response = try XCTUnwrap(
         HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)
       )
       return (response, body)
     }
     defer { MockURLProtocol.handler = nil }
 
-    let base = try #require(URL(string: "http://127.0.0.1:8"))
+    let base = try XCTUnwrap(URL(string: "http://127.0.0.1:8"))
     let config = HTTPNotesSummarizerConfig(
       provider: .openAICompatible,
       model: "local",
@@ -160,36 +159,39 @@ struct HTTPNotesSummarizerTests {
       )
     )
 
-    #expect(out.title == "Chat")
+    XCTAssertEqual(out.title, "Chat")
   }
 
-  @Test func propagatesNon2xxHTTPAsError() async throws {
+  func testPropagatesNon2xxHTTPAsError() async throws {
     MockURLProtocol.handler = { request in
-      let url = try #require(request.url)
-      let response = try #require(
+      let url = try XCTUnwrap(request.url)
+      let response = try XCTUnwrap(
         HTTPURLResponse(url: url, statusCode: 503, httpVersion: nil, headerFields: nil)
       )
       return (response, Data("upstream".utf8))
     }
     defer { MockURLProtocol.handler = nil }
 
-    let base = try #require(URL(string: "http://127.0.0.1:7"))
+    let base = try XCTUnwrap(URL(string: "http://127.0.0.1:7"))
     let config = HTTPNotesSummarizerConfig(
       provider: .ollama, model: "m", baseURL: base, apiKey: nil)
     let summarizer = HTTPNotesSummarizer(config: config, urlSession: makeMockSession())
 
-    await #expect(throws: NSError.self) {
-      try await summarizer.summarize(
+    do {
+      _ = try await summarizer.summarize(
         NotesSummarizationRequest(
           transcriptMarkdown: "x",
           previousNotesMarkdown: nil,
           mode: .final
         )
       )
+      XCTFail("Expected summarize to throw")
+    } catch {
+      XCTAssertNotNil(error)
     }
   }
 
-  @Test func ollamaPromptIncludesNotesPreferences() async throws {
+  func testOllamaPromptIncludesNotesPreferences() async throws {
     let notes = NotesSummary(
       title: "T",
       summaryMarkdown: "## Summary\nx",
@@ -199,7 +201,7 @@ struct HTTPNotesSummarizerTests {
       topicTimeline: []
     )
 
-    let inner = try #require(String(data: try JSONEncoder().encode(notes), encoding: .utf8))
+    let inner = try XCTUnwrap(String(data: try JSONEncoder().encode(notes), encoding: .utf8))
     let envelope: [String: Any] = [
       "message": [
         "content": inner
@@ -208,17 +210,17 @@ struct HTTPNotesSummarizerTests {
     let responseBody = try JSONSerialization.data(withJSONObject: envelope)
 
     MockURLProtocol.handler = { request in
-      let requestData = try #require(httpBodyData(from: request))
+      let requestData = try XCTUnwrap(httpBodyData(from: request))
       let body = try JSONSerialization.jsonObject(with: requestData) as? [String: Any]
-      let messages = try #require(body?["messages"] as? [[String: Any]])
-      let user = try #require(messages.last?["content"] as? String)
+      let messages = try XCTUnwrap(body?["messages"] as? [[String: Any]])
+      let user = try XCTUnwrap(messages.last?["content"] as? String)
 
-      #expect(user.contains("Create detailed notes") || user.contains("detailed notes"))
-      #expect(user.contains("executive brief"))
-      #expect(user.contains("Focus on decisions"))
+      XCTAssertTrue(user.contains("Create detailed notes") || user.contains("detailed notes"))
+      XCTAssertTrue(user.contains("executive brief"))
+      XCTAssertTrue(user.contains("Focus on decisions"))
 
-      let url = try #require(request.url)
-      let response = try #require(
+      let url = try XCTUnwrap(request.url)
+      let response = try XCTUnwrap(
         HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)
       )
 
@@ -226,7 +228,7 @@ struct HTTPNotesSummarizerTests {
     }
     defer { MockURLProtocol.handler = nil }
 
-    let base = try #require(URL(string: "http://127.0.0.1:9"))
+    let base = try XCTUnwrap(URL(string: "http://127.0.0.1:9"))
     let summarizer = HTTPNotesSummarizer(
       config: HTTPNotesSummarizerConfig(
         provider: .ollama,

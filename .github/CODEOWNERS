@@ -1,7 +1,6 @@
 # Require owner review for release/security-sensitive paths (enable in branch protection when ready).
 .github/workflows/ @lukehiura
 scripts/ @lukehiura
-ExportOptions.plist @lukehiura
 Package.swift @lukehiura
 Package.resolved @lukehiura
 Sources/NoteStreamApp/KeychainStore.swift @lukehiura

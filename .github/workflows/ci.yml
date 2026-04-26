@@ -36,6 +36,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
+      # restore-keys can restore a pre-migration .build that still contains a Swift Testing
+      # PackageTests.derived runner; strip it so `swift test --disable-swift-testing` does not
+      # compile against a stale runner that imports _TestingInternals.
+      - name: Clear stale SwiftPM test runner artifacts
+        run: |
+          [ -d .build ] || exit 0
+          find .build -type d -name '*.derived' | while IFS= read -r d; do rm -rf "$d"; done
+
       - name: Install tools
         run: |
           brew install swift-format swiftlint markdownlint-cli shellcheck actionlint
@@ -52,8 +60,10 @@ jobs:
       - name: Build release
         run: swift build -c release -v
 
+      # With swift-testing in Package.swift: plain swift test. After an XCTest-only
+      # migration (no swift-testing dependency), use --disable-swift-testing (as below).
       - name: Test with coverage
-        run: swift test --enable-code-coverage -v
+        run: swift test --enable-code-coverage --disable-swift-testing -v
 
       - name: Python tools check
         run: make python-tools-check

@@ -22,7 +22,7 @@ release:
 	swift build -c release
 
 test:
-	swift test --enable-code-coverage
+	swift test --enable-code-coverage --disable-swift-testing
 
 lint:
 	swift-format lint --strict --recursive Sources Tests

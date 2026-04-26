@@ -37,6 +37,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-release-
 
+      # Same rationale as CI: avoid stale *.derived PackageTests runners from cache restore-keys.
+      - name: Clear stale SwiftPM test runner artifacts
+        run: |
+          [ -d .build ] || exit 0
+          find .build -type d -name '*.derived' | while IFS= read -r d; do rm -rf "$d"; done
+
       - name: Install tools
         run: |
           brew install swift-format swiftlint markdownlint-cli

@@ -21,8 +21,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/argmaxinc/WhisperKit", from: "0.18.0"),
-        .package(url: "https://github.com/apple/swift-testing.git", .upToNextMajor(from: "0.12.0"))
+        .package(url: "https://github.com/argmaxinc/WhisperKit", from: "0.18.0")
     ],
     targets: [
         .target(
@@ -49,16 +48,14 @@ let package = Package(
         .testTarget(
             name: "NoteStreamCoreTests",
             dependencies: [
-                "NoteStreamCore",
-                .product(name: "Testing", package: "swift-testing")
+                "NoteStreamCore"
             ]
         ),
         .testTarget(
             name: "NoteStreamInfrastructureTests",
             dependencies: [
                 "NoteStreamCore",
-                "NoteStreamInfrastructure",
-                .product(name: "Testing", package: "swift-testing")
+                "NoteStreamInfrastructure"
             ]
         )
     ]
