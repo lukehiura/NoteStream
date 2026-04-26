@@ -52,13 +52,7 @@ jobs:
           fi
 
       - name: Check for obvious API keys
-        run: |
-          set -euo pipefail
-
-          if git grep -nE '(sk-[A-Za-z0-9_-]{20,}|OPENAI_API_KEY=|ANTHROPIC_API_KEY=)' -- . ':!README.md'; then
-            echo "Possible API key or secret found."
-            exit 1
-          fi
+        run: scripts/check-secrets.sh
 
       - name: swift-format lint
         run: swift-format lint --strict --recursive Sources Tests
@@ -86,6 +80,14 @@ jobs:
 
       - name: Test with coverage
         run: swift test --enable-code-coverage -v
+
+      - name: Upload debug build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notestream-debug-build
+          path: .build/**/NoteStreamApp
+          retention-days: 14
 
       - name: Upload debug artifacts on failure
         if: failure()

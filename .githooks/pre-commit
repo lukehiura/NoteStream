@@ -12,7 +12,21 @@ if [ -n "$forbidden" ]; then
   exit 1
 fi
 
-if git diff --cached --unified=0 | grep -Eiq '(sk-[A-Za-z0-9_-]{20,}|OPENAI_API_KEY=|ANTHROPIC_API_KEY=|HF_TOKEN=|HUGGINGFACE_TOKEN=)'; then
+# NOTE: Split env var names to avoid the hook self-matching the pattern text.
+# Only scan added lines so secret removals / refactors do not trip on deleted hunks.
+staged_secret_pattern="(sk-[A-Za-z0-9_-]{20,}|OPENAI_""API_KEY=|ANTHROPIC_""API_KEY=|HF_""TOKEN=|HUGGINGFACE_""TOKEN=|HUGGING_""FACE_HUB_TOKEN=)"
+added_staged_lines=""
+while IFS= read -r line; do
+  case "$line" in
+    '+++'*) continue ;;
+  esac
+  if [[ "$line" == +* ]]; then
+    line="${line:1}"
+    added_staged_lines+="${line}"$'\n'
+  fi
+done < <(git diff --cached --unified=0)
+
+if [ -n "$added_staged_lines" ] && printf '%s' "$added_staged_lines" | grep -Eiq "$staged_secret_pattern"; then
   echo "Possible secret found in staged changes."
   exit 1
 fi

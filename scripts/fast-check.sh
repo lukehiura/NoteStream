@@ -11,10 +11,7 @@ if [ -n "$forbidden" ]; then
 fi
 
 echo "Checking for obvious API keys..."
-if git grep -nE '(sk-[A-Za-z0-9_-]{20,}|OPENAI_API_KEY=|ANTHROPIC_API_KEY=|HF_TOKEN=|HUGGINGFACE_TOKEN=)' -- . ':!README.md' ':!docs/**' ':!.github/workflows/**' ':!scripts/**' ':!.githooks/**'; then
-  echo "Possible API key or secret found."
-  exit 1
-fi
+scripts/check-secrets.sh
 
 echo "Running swift-format lint..."
 swift-format lint --strict --recursive Sources Tests
