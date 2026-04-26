@@ -22,7 +22,8 @@ public enum NotesDetailLevel: String, Codable, CaseIterable, Identifiable, Senda
     case .balanced:
       return "Use a balanced level of detail. Capture the main context without over-explaining."
     case .detailed:
-      return "Create detailed notes. Preserve important nuance, examples, disagreements, and context."
+      return
+        "Create detailed notes. Preserve important nuance, examples, disagreements, and context."
     }
   }
 }
@@ -51,9 +52,11 @@ public enum NotesTone: String, Codable, CaseIterable, Identifiable, Sendable {
     case .clean:
       return "Use clean, neutral, readable Markdown."
     case .meetingMinutes:
-      return "Format like meeting minutes. Emphasize decisions, action items, owners, and open questions."
+      return
+        "Format like meeting minutes. Emphasize decisions, action items, owners, and open questions."
     case .executive:
-      return "Format like an executive brief. Emphasize bottom line, risks, decisions, and next steps."
+      return
+        "Format like an executive brief. Emphasize bottom line, risks, decisions, and next steps."
     case .studyNotes:
       return "Format like study notes. Emphasize concepts, explanations, examples, and terms."
     case .casual:

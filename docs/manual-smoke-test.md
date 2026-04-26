@@ -38,4 +38,3 @@ swift-format lint --recursive Sources Tests
 10. Confirm transcript appears
 11. Quit and reopen app
 12. Confirm recorded session reloads
-

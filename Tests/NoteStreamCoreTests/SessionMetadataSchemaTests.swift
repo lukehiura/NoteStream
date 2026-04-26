@@ -5,12 +5,12 @@ import Testing
 
 @Test func sessionMetadataDecodesMissingSchemaAsVersion1() throws {
   let json = """
-  {
-    "appVersion" : "1.0",
-    "createdAt" : "2024-01-01T12:00:00Z",
-    "updatedAt" : "2024-01-01T12:00:00Z"
-  }
-  """
+    {
+      "appVersion" : "1.0",
+      "createdAt" : "2024-01-01T12:00:00Z",
+      "updatedAt" : "2024-01-01T12:00:00Z"
+    }
+    """
   let decoder = JSONDecoder()
   decoder.dateDecodingStrategy = .iso8601
   let meta = try decoder.decode(SessionMetadata.self, from: Data(json.utf8))

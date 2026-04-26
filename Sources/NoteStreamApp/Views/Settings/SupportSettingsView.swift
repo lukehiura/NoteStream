@@ -24,7 +24,8 @@ struct SupportSettingsView: View {
               Button {
                 copySupportLink()
               } label: {
-                Label(copied ? "Copied" : "Copy Link", systemImage: copied ? "checkmark" : "doc.on.doc")
+                Label(
+                  copied ? "Copied" : "Copy Link", systemImage: copied ? "checkmark" : "doc.on.doc")
               }
               .buttonStyle(.bordered)
             }

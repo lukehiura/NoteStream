@@ -50,4 +50,3 @@ enum NotesFormatPreset: String, CaseIterable, Identifiable {
     }
   }
 }
-

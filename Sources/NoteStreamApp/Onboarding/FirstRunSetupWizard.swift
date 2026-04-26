@@ -88,8 +88,10 @@ struct FirstRunSetupWizard: View {
         }
 
         Label(
-          ScreenRecordingPermission.hasPermission() ? "Permission granted" : "Permission not confirmed",
-          systemImage: ScreenRecordingPermission.hasPermission() ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+          ScreenRecordingPermission.hasPermission()
+            ? "Permission granted" : "Permission not confirmed",
+          systemImage: ScreenRecordingPermission.hasPermission()
+            ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
         )
         .foregroundStyle(ScreenRecordingPermission.hasPermission() ? .green : .orange)
       }

@@ -239,7 +239,8 @@ final class TranscriptionViewModel {
   /// Provisional speaker labels during capture using rolling-window batch diarization (requires a real diarizer).
   var liveSpeakerDiarizationEnabled: Bool {
     didSet {
-      UserDefaults.standard.set(liveSpeakerDiarizationEnabled, forKey: "liveSpeakerDiarizationEnabled")
+      UserDefaults.standard.set(
+        liveSpeakerDiarizationEnabled, forKey: "liveSpeakerDiarizationEnabled")
       if !liveSpeakerDiarizationEnabled {
         stopLiveSpeakerDiarizationSync()
       }
@@ -306,7 +307,8 @@ final class TranscriptionViewModel {
     }
 
     if realSpeakerDiarizationIsReady {
-      return "Real speaker diarization is ready. Speaker labels will be applied after Stop & Transcribe."
+      return
+        "Real speaker diarization is ready. Speaker labels will be applied after Stop & Transcribe."
     }
 
     return realSpeakerDiarizationSetupText
@@ -589,7 +591,8 @@ final class TranscriptionViewModel {
 
   var includeNotesSpeakerHighlights: Bool {
     didSet {
-      UserDefaults.standard.set(includeNotesSpeakerHighlights, forKey: "includeNotesSpeakerHighlights")
+      UserDefaults.standard.set(
+        includeNotesSpeakerHighlights, forKey: "includeNotesSpeakerHighlights")
       markNotesFormatAsCustom()
     }
   }
@@ -986,7 +989,8 @@ final class TranscriptionViewModel {
 
   private func rebuildOllamaModelClient() {
     let trimmed = llmBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
-    let url = URL(string: trimmed) ?? URL(string: "http://localhost:11434")!
+    let url =
+      URL(string: trimmed) ?? (URL(string: "http://localhost:11434") ?? URL(fileURLWithPath: "/"))
     ollamaModelClient = OllamaModelClient(baseURL: url, diagnostics: diagnostics)
   }
 
@@ -1767,7 +1771,8 @@ final class TranscriptionViewModel {
       huggingFaceTokenStatusText = "Hugging Face token saved."
       rebuildSpeakerDiarizer()
     } catch {
-      huggingFaceTokenStatusText = "Failed to save Hugging Face token: \(error.localizedDescription)"
+      huggingFaceTokenStatusText =
+        "Failed to save Hugging Face token: \(error.localizedDescription)"
     }
   }
 
@@ -1784,7 +1789,9 @@ final class TranscriptionViewModel {
   }
 
   func openPyannoteDiarizationModelPage() {
-    guard let url = URL(string: "https://huggingface.co/pyannote/speaker-diarization-3.1") else { return }
+    guard let url = URL(string: "https://huggingface.co/pyannote/speaker-diarization-3.1") else {
+      return
+    }
     OpenExternalURL.open(url)
   }
 
@@ -2849,7 +2856,8 @@ final class TranscriptionViewModel {
 
     let labels = defaultSpeakerLabels(for: liveSpeakerTurns)
 
-    let recentSegments = liveTranscriptSegments
+    let recentSegments =
+      liveTranscriptSegments
       .filter { $0.endTime >= windowStart }
 
     let recentIDs = Set(recentSegments.map(\.id))
@@ -3274,7 +3282,8 @@ final class TranscriptionViewModel {
     if isBusy { return }
 
     let optimisticStartedAt = Date()
-    setUIState(.startingRecording(startedAt: optimisticStartedAt), reason: "recording_start_requested")
+    setUIState(
+      .startingRecording(startedAt: optimisticStartedAt), reason: "recording_start_requested")
     startRecordingTimer()
     startRecordingStartupWatchdog(startedAt: optimisticStartedAt)
 

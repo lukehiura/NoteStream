@@ -13,9 +13,11 @@ struct GeneralSettingsView: View {
           Text("Maintenance actions")
             .font(.headline)
 
-          Text("These reset local app settings only. They do not delete recordings, transcripts, or notes.")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+          Text(
+            "These reset local app settings only. They do not delete recordings, transcripts, or notes."
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
 
           HStack(spacing: 10) {
             Button {
@@ -66,7 +68,8 @@ struct GeneralSettingsView: View {
 
       Button("Cancel", role: .cancel) {}
     } message: {
-      Text("This restores speaker-label settings to defaults. It does not modify saved transcripts.")
+      Text(
+        "This restores speaker-label settings to defaults. It does not modify saved transcripts.")
     }
   }
 }

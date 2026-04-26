@@ -44,9 +44,11 @@ private struct AINotesProviderCard: View {
             Text("AI Notes")
               .font(.headline)
 
-            Text("Choose the model provider used for summaries, titles, topic timelines, and questions.")
-              .font(.caption)
-              .foregroundStyle(.secondary)
+            Text(
+              "Choose the model provider used for summaries, titles, topic timelines, and questions."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
           }
 
           Spacer()
@@ -130,7 +132,8 @@ private struct AINotesProviderCard: View {
 
   private var providerStatusIcon: String {
     if model.llmProvider == .off { return "pause.circle" }
-    return model.notesSummarizerIsConfigured ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+    return model.notesSummarizerIsConfigured
+      ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
   }
 }
 
@@ -437,10 +440,12 @@ private struct RollingLiveNotesCard: View {
 
         LiveNotesProcessPreview(model: model)
 
-        Text("Recommended: 3 to 5 minutes and 500+ new characters. Shorter intervals cost more and can produce noisy updates.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
+        Text(
+          "Recommended: 3 to 5 minutes and 500+ new characters. Shorter intervals cost more and can produce noisy updates."
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
       }
       .padding(.vertical, 6)
     } label: {
@@ -455,13 +460,15 @@ private struct RollingLiveNotesPill: View {
   var body: some View {
     let enabled = model.liveNotesEnabled && model.notesSummaryEnabled
 
-    Label(enabled ? "Enabled" : "Off", systemImage: enabled ? "checkmark.circle.fill" : "pause.circle")
-      .font(.caption.weight(.semibold))
-      .foregroundStyle(enabled ? .green : .secondary)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 4)
-      .background((enabled ? Color.green : Color.secondary).opacity(0.12))
-      .clipShape(Capsule())
+    Label(
+      enabled ? "Enabled" : "Off", systemImage: enabled ? "checkmark.circle.fill" : "pause.circle"
+    )
+    .font(.caption.weight(.semibold))
+    .foregroundStyle(enabled ? .green : .secondary)
+    .padding(.horizontal, 8)
+    .padding(.vertical, 4)
+    .background((enabled ? Color.green : Color.secondary).opacity(0.12))
+    .clipShape(Capsule())
   }
 }
 
@@ -541,13 +548,16 @@ private struct NotesAdvancedInstructionsCard: View {
                   .strokeBorder(.secondary.opacity(0.18))
               }
 
-            if model.notesCustomInstructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-              Text("Example: Focus on decisions and tradeoffs. Keep action items at the top. Use concise bullets.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-                .allowsHitTesting(false)
+            if model.notesCustomInstructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            {
+              Text(
+                "Example: Focus on decisions and tradeoffs. Keep action items at the top. Use concise bullets."
+              )
+              .font(.caption)
+              .foregroundStyle(.secondary)
+              .padding(.horizontal, 12)
+              .padding(.vertical, 12)
+              .allowsHitTesting(false)
             }
           }
 
@@ -555,7 +565,8 @@ private struct NotesAdvancedInstructionsCard: View {
             Button("Clear") {
               model.notesCustomInstructions = ""
             }
-            .disabled(model.notesCustomInstructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(
+              model.notesCustomInstructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
             Spacer()
 

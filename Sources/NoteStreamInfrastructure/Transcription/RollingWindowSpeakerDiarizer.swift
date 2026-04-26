@@ -62,7 +62,9 @@ public actor RollingWindowSpeakerDiarizer: LiveSpeakerDiarizing {
     expectedSpeakerCount = nil
   }
 
-  private func diarizeCurrentWindow(currentEnd: TimeInterval) async throws -> LiveSpeakerDiarizationUpdate? {
+  private func diarizeCurrentWindow(currentEnd: TimeInterval) async throws
+    -> LiveSpeakerDiarizationUpdate?
+  {
     guard !bufferedFrames.isEmpty else { return nil }
 
     let windowStart = bufferedFrames.first?.startTime ?? max(0, currentEnd - windowSeconds)

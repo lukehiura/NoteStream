@@ -52,11 +52,11 @@ struct DiagnosticsPanel: View {
 
       HStack {
         Picker("Level", selection: $model.diagnosticsLevelFilter) {
-          Text("All").tag(Optional<DiagnosticsLevel>.none)
-          Text("Debug").tag(Optional<DiagnosticsLevel>.some(.debug))
-          Text("Info").tag(Optional<DiagnosticsLevel>.some(.info))
-          Text("Warning").tag(Optional<DiagnosticsLevel>.some(.warning))
-          Text("Error").tag(Optional<DiagnosticsLevel>.some(.error))
+          Text("All").tag(nil as DiagnosticsLevel?)
+          Text("Debug").tag(DiagnosticsLevel.debug as DiagnosticsLevel?)
+          Text("Info").tag(DiagnosticsLevel.info as DiagnosticsLevel?)
+          Text("Warning").tag(DiagnosticsLevel.warning as DiagnosticsLevel?)
+          Text("Error").tag(DiagnosticsLevel.error as DiagnosticsLevel?)
         }
         .frame(width: 160)
 
@@ -65,9 +65,11 @@ struct DiagnosticsPanel: View {
       }
 
       Group {
-        Text("Frames: \(model.rollingFrameCount)  Chunks: \(model.rollingChunkCount)  RMS: \(String(format: "%.4f", model.lastRMS))")
-          .font(.caption)
-          .foregroundStyle(.secondary)
+        Text(
+          "Frames: \(model.rollingFrameCount)  Chunks: \(model.rollingChunkCount)  RMS: \(String(format: "%.4f", model.lastRMS))"
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
 
         if let err = model.rollingLastError {
           Text("Rolling: \(err)")

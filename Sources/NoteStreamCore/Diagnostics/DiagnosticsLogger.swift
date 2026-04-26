@@ -41,8 +41,8 @@ public struct NoopDiagnosticsLogger: DiagnosticsLogging {
   public func log(_ event: DiagnosticsEvent) async {}
 }
 
-public extension DiagnosticsLogging {
-  func debug(
+extension DiagnosticsLogging {
+  public func debug(
     _ category: DiagnosticsCategory,
     _ message: String,
     _ metadata: [String: String] = [:]
@@ -56,7 +56,7 @@ public extension DiagnosticsLogging {
       ))
   }
 
-  func info(
+  public func info(
     _ category: DiagnosticsCategory,
     _ message: String,
     _ metadata: [String: String] = [:]
@@ -70,7 +70,7 @@ public extension DiagnosticsLogging {
       ))
   }
 
-  func warning(
+  public func warning(
     _ category: DiagnosticsCategory,
     _ message: String,
     _ metadata: [String: String] = [:]
@@ -84,7 +84,7 @@ public extension DiagnosticsLogging {
       ))
   }
 
-  func error(
+  public func error(
     _ category: DiagnosticsCategory,
     _ message: String,
     _ error: Error? = nil,

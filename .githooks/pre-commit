@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Running pre-commit checks..."
+
+staged_paths="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+forbidden="$(printf '%s\n' "$staged_paths" | grep -Ei '(\.(caf|wav|m4a|mp3|flac|aiff)$|(^|/)Sessions(/|$)|(^|/)sessions(/|$)|(^|/)diagnostics\.jsonl$|(^|/)app\.jsonl$)' || true)"
+if [ -n "$forbidden" ]; then
+  echo "Do not commit private/local recording artifacts:"
+  echo "$forbidden"
+  exit 1
+fi
+
+if git diff --cached --unified=0 | grep -Eiq '(sk-[A-Za-z0-9_-]{20,}|OPENAI_API_KEY=|ANTHROPIC_API_KEY=|HF_TOKEN=|HUGGINGFACE_TOKEN=)'; then
+  echo "Possible secret found in staged changes."
+  exit 1
+fi
+
+staged_swift_files="$(printf '%s\n' "$staged_paths" | grep -E '^(Sources|Tests)/.*\.swift$' || true)"
+staged_md_files="$(printf '%s\n' "$staged_paths" | grep -E '\.md$' || true)"
+
+if [ -n "$staged_swift_files" ]; then
+  echo "Formatting staged Swift files..."
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    swift-format format --in-place "$f"
+    git add "$f"
+    swift-format lint --strict "$f"
+  done <<< "$staged_swift_files"
+
+  echo "Running SwiftLint..."
+  swiftlint lint --strict Sources Tests
+fi
+
+if [ -n "$staged_md_files" ]; then
+  echo "Running Markdown lint..."
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    markdownlint "$f"
+  done <<< "$staged_md_files"
+fi
+
+echo "Pre-commit checks passed."
+

@@ -10,7 +10,8 @@ public enum GeneratedTitleFormatter {
   ]
 
   public static func sanitize(_ raw: String, maxLength: Int = 72) -> String? {
-    var title = raw
+    var title =
+      raw
       .replacingOccurrences(of: "\n", with: " ")
       .replacingOccurrences(of: "\t", with: " ")
       .trimmingCharacters(in: .whitespacesAndNewlines)

@@ -80,7 +80,7 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
           "anyOf": [
             ["type": "string"],
             ["type": "null"],
-          ],
+          ]
         ],
       ],
       "required": ["id", "startTime", "title", "summary"],

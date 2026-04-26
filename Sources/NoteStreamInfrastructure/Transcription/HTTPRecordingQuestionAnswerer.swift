@@ -49,8 +49,11 @@ public final class HTTPRecordingQuestionAnswerer: RecordingQuestionAnswering, @u
     """
   }
 
-  private func answerWithOllama(_ request: RecordingQuestionRequest) async throws -> RecordingQuestionAnswer {
-    let base = config.baseURL ?? URL(string: "http://localhost:11434")!
+  private func answerWithOllama(_ request: RecordingQuestionRequest) async throws
+    -> RecordingQuestionAnswer
+  {
+    let base =
+      config.baseURL ?? (URL(string: "http://localhost:11434") ?? URL(fileURLWithPath: "/"))
     let url = base.appendingPathComponent("api").appendingPathComponent("chat")
 
     let body: [String: Any] = [
@@ -81,16 +84,35 @@ public final class HTTPRecordingQuestionAnswerer: RecordingQuestionAnswering, @u
   {
     let base: URL
     if config.provider == .openAI {
-      base = URL(string: "https://api.openai.com/v1")!
+      base = URL(string: "https://api.openai.com/v1") ?? URL(fileURLWithPath: "/")
     } else if let baseURL = config.baseURL {
       base = baseURL
     } else {
       throw NoteStreamError.missingLLMBaseURL
     }
 
-    var s = base.absoluteString
-    while s.hasSuffix("/") { s.removeLast() }
-    let url = URL(string: s.hasSuffix("/v1") ? "\(s)/chat/completions" : "\(s)/v1/chat/completions")!
+    guard var components = URLComponents(url: base, resolvingAgainstBaseURL: false) else {
+      throw NoteStreamError.missingLLMBaseURL
+    }
+
+    if components.scheme == nil {
+      components.scheme = "https"
+    }
+
+    let basePath = components.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+    let normalizedBasePath: String
+    if basePath.isEmpty {
+      normalizedBasePath = "v1"
+    } else if basePath.hasSuffix("v1") {
+      normalizedBasePath = basePath
+    } else {
+      normalizedBasePath = "\(basePath)/v1"
+    }
+    components.path = "/\(normalizedBasePath)/chat/completions"
+
+    guard let url = components.url else {
+      throw NoteStreamError.missingLLMBaseURL
+    }
 
     var headers: [String: String] = [:]
     if let apiKey = config.apiKey, !apiKey.isEmpty {
@@ -121,12 +143,14 @@ public final class HTTPRecordingQuestionAnswerer: RecordingQuestionAnswering, @u
     return RecordingQuestionAnswer(answerMarkdown: content)
   }
 
-  private func answerWithAnthropic(_ request: RecordingQuestionRequest) async throws -> RecordingQuestionAnswer {
+  private func answerWithAnthropic(_ request: RecordingQuestionRequest) async throws
+    -> RecordingQuestionAnswer
+  {
     guard let apiKey = config.apiKey, !apiKey.isEmpty else {
       throw NoteStreamError.missingAnthropicAPIKey
     }
 
-    let url = URL(string: "https://api.anthropic.com/v1/messages")!
+    let url = URL(string: "https://api.anthropic.com/v1/messages") ?? URL(fileURLWithPath: "/")
 
     let body: [String: Any] = [
       "model": config.model,
@@ -136,7 +160,7 @@ public final class HTTPRecordingQuestionAnswerer: RecordingQuestionAnswering, @u
         [
           "role": "user",
           "content": prompt(request),
-        ],
+        ]
       ],
     ]
 
@@ -151,7 +175,8 @@ public final class HTTPRecordingQuestionAnswerer: RecordingQuestionAnswering, @u
 
     let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
     let contentBlocks = root?["content"] as? [[String: Any]]
-    let text = contentBlocks?
+    let text =
+      contentBlocks?
       .compactMap { $0["text"] as? String }
       .joined(separator: "\n") ?? ""
 

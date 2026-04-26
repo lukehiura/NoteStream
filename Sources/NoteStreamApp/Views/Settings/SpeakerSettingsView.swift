@@ -29,13 +29,16 @@ struct SpeakerWorkflowStatusCard: View {
 
       VStack(alignment: .leading, spacing: 6) {
         Label(
-          model.speakerDiarizationEnabled ? "Speaker labeling is enabled" : "Speaker labeling is off",
+          model.speakerDiarizationEnabled
+            ? "Speaker labeling is enabled" : "Speaker labeling is off",
           systemImage: model.speakerDiarizationEnabled ? "checkmark.circle.fill" : "pause.circle"
         )
 
         Label(
-          model.realSpeakerDiarizationIsReady ? "Real diarizer configured" : "No real diarizer configured",
-          systemImage: model.realSpeakerDiarizationIsReady ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+          model.realSpeakerDiarizationIsReady
+            ? "Real diarizer configured" : "No real diarizer configured",
+          systemImage: model.realSpeakerDiarizationIsReady
+            ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
         )
 
         #if DEBUG
@@ -74,13 +77,16 @@ struct SpeakerModePill: View {
   var body: some View {
     let real = model.realSpeakerDiarizationIsReady
 
-    Label(real ? "Real" : "Debug / Missing", systemImage: real ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-      .font(.caption.weight(.semibold))
-      .foregroundStyle(real ? .green : .orange)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 4)
-      .background((real ? Color.green : Color.orange).opacity(0.12))
-      .clipShape(Capsule())
+    Label(
+      real ? "Real" : "Debug / Missing",
+      systemImage: real ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+    )
+    .font(.caption.weight(.semibold))
+    .foregroundStyle(real ? .green : .orange)
+    .padding(.horizontal, 8)
+    .padding(.vertical, 4)
+    .background((real ? Color.green : Color.orange).opacity(0.12))
+    .clipShape(Capsule())
   }
 }
 
@@ -98,7 +104,8 @@ private struct HuggingFaceTokenSettingsView: View {
 
           Label(
             model.hasHuggingFaceToken ? "Saved" : "Missing",
-            systemImage: model.hasHuggingFaceToken ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+            systemImage: model.hasHuggingFaceToken
+              ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
           )
           .font(.caption.weight(.semibold))
           .foregroundStyle(model.hasHuggingFaceToken ? .green : .orange)
@@ -118,7 +125,8 @@ private struct HuggingFaceTokenSettingsView: View {
           Button("Save Token") {
             model.saveHuggingFaceToken()
           }
-          .disabled(model.huggingFaceTokenDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+          .disabled(
+            model.huggingFaceTokenDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
           Button("Clear Token") {
             model.clearHuggingFaceToken()
@@ -286,7 +294,8 @@ struct SpeakerSettingsView: View {
         Label("Real Diarization Backend", systemImage: "waveform.and.person.filled")
       }
 
-      DisclosureGroup("Advanced: executable output contract", isExpanded: $showingAdvancedDiarizer) {
+      DisclosureGroup("Advanced: executable output contract", isExpanded: $showingAdvancedDiarizer)
+      {
         VStack(alignment: .leading, spacing: 12) {
           Text(
             "The diarization tool must read `--audio` and optional `--speakers`, and print SpeakerTurn JSON to stdout only."

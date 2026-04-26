@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Running pre-push checks..."
+scripts/dev-check.sh
+echo "Pre-push checks passed."
+
