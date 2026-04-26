@@ -48,6 +48,9 @@ gh api \
   -F can_approve_pull_request_reviews=false
 
 echo "Creating labels (ignore errors if they already exist)..."
+gh label create "dependencies" --color "0366d6" --description "Dependency updates" || true
+gh label create "swift" --color "F05138" --description "Swift package dependencies" || true
+gh label create "github-actions" --color "2088FF" --description "GitHub Actions workflow updates" || true
 gh label create "type: bug" --color "d73a4a" --description "Something is broken" || true
 gh label create "type: feature" --color "a2eeef" --description "New feature or enhancement" || true
 gh label create "type: docs" --color "0075ca" --description "Documentation change" || true
