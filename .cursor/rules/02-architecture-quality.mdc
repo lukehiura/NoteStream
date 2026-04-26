@@ -1,0 +1,19 @@
+---
+description: Architecture boundaries, errors, logging, persistence, and tasks for NoteStream.
+globs: Sources/**/*.swift, Tests/**/*.swift, docs/architecture.md
+---
+
+# NoteStream architecture and quality
+
+- Do not put business logic in SwiftUI views; compose views and keep policy in view models or Core.
+- Do not log transcript text, prompts, API keys, or raw LLM responses. Use `DiagnosticsRedactor.sanitize` / `redact` for diagnostics sinks.
+- Do not store API keys in UserDefaults; use Keychain for secrets.
+- Do not block the main actor with file I/O, network calls, transcription, diarization, or LLM work.
+- **NoteStreamCore** must not import AppKit or SwiftUI.
+- Every external adapter should have a mock or fake test double.
+- Every persisted model change needs backward compatibility (`SessionFileSchema` + `SessionPersistedMigration`).
+- Prefer `NoteStreamError` over `NSError(domain: "NoteStream", …)` for new and refactored throw sites.
+- Long-running workflows should have a clear cancellation owner (recording, rolling transcript, notes, model prep); avoid untracked `Task {}` for core flows when practical.
+- Every user-facing failure should suggest or wire a recovery action where reasonable.
+
+See `docs/architecture.md` for layering and persistence details.

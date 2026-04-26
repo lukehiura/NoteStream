@@ -1,0 +1,32 @@
+---
+description: Prevent flicker by enforcing committed vs draft transcript.
+alwaysApply: true
+---
+
+# Transcript stability (v1)
+
+## Two-layer transcript model
+
+- **Committed transcript**: append-only, immutable, never edited in place.
+- **Draft tail**: the only region allowed to change while recording.
+
+## Rules
+
+- UI must never bind directly to raw Whisper output.
+- Updates must go through a coordinator (actor) that enforces the watermark:
+  - Everything above the watermark is committed.
+  - Only the tail may revise.
+- Prefer **segment arrays** with stable IDs; avoid “one giant string”.
+- Throttle UI updates (target 500–1000ms) unless a commit happens.
+
+## Chunk merge policy (rolling)
+
+- Merge/dedup by **timestamps**, not string matching.
+- Maintain `lastCommittedEndTime`.
+- For new chunk results: ignore segments ending before `lastCommittedEndTime` (with a small margin).
+
+## Final pass policy
+
+- After stop, re-run transcription on the full saved audio.
+- Replace rolling transcript with the final transcript output.
+

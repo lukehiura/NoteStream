@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Versions
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Install tools
+        run: |
+          brew install swift-format swiftlint markdownlint-cli
+
+      - name: Check no private recording artifacts are committed
+        run: |
+          set -euo pipefail
+
+          forbidden="$(git ls-files | grep -Ei '(\.(caf|wav|m4a|mp3|flac|aiff)$|(^|/)Sessions(/|$)|(^|/)sessions(/|$)|(^|/)diagnostics\.jsonl$|(^|/)app\.jsonl$)' || true)"
+
+          if [ -n "$forbidden" ]; then
+            echo "Forbidden private/local artifacts are committed:"
+            echo "$forbidden"
+            exit 1
+          fi
+
+      - name: Check for obvious API keys
+        run: |
+          set -euo pipefail
+
+          if git grep -nE '(sk-[A-Za-z0-9_-]{20,}|OPENAI_API_KEY=|ANTHROPIC_API_KEY=)' -- . ':!README.md'; then
+            echo "Possible API key or secret found."
+            exit 1
+          fi
+
+      - name: swift-format lint
+        run: swift-format lint --strict --recursive Sources Tests
+
+      - name: SwiftLint
+        run: swiftlint lint --strict --reporter github-actions-logging
+
+      - name: Markdown lint
+        run: |
+          set -euo pipefail
+          md_files=(README.md)
+          if [ -d docs ]; then
+            while IFS= read -r -d '' f; do md_files+=("$f"); done < <(find docs -name '*.md' -print0)
+          fi
+          markdownlint "${md_files[@]}"
+
+      - name: Resolve
+        run: swift package resolve
+
+      - name: Build debug
+        run: swift build -v
+
+      - name: Build release
+        run: swift build -c release -v
+
+      - name: Test with coverage
+        run: swift test --enable-code-coverage -v
+
+      - name: Upload debug artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-debug
+          path: |
+            .build/**/*.log
+            .build/**/*.json

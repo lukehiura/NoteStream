@@ -1,0 +1,23 @@
+---
+description: macOS-native priorities for capture, permissions, packaging.
+alwaysApply: true
+---
+
+# macOS-native priorities (v1)
+
+## Capture
+
+- Use **ScreenCaptureKit** for system audio capture.
+- Treat permission failures as first-class UX: explain what to enable and why.
+- Always record to disk in parallel with any rolling chunk pipeline.
+
+## Audio
+
+- Expect capture audio to arrive as sample buffers; convert with **AVFoundation**.
+- Normalize pipeline: 48k stereo → 16k mono (or whatever WhisperKit expects).
+
+## Packaging
+
+- Prefer native app bundle behaviors (sandbox, file access, entitlement planning).
+- Don’t add Electron/Tauri/RN layers for v1.
+

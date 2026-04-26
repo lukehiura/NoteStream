@@ -1,0 +1,31 @@
+.DS_Store
+xcuserdata/
+DerivedData/
+.swiftpm/
+.build/
+*.xcworkspace
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+
+# Recordings / sessions (never commit user data)
+Documents/
+Sessions/
+sessions/
+*.m4a
+*.wav
+*.caf
+*.mp3
+*.aiff
+*.flac
+
+# Only ignore transcripts/exports inside local session folders
+Sessions/**/*.json
+Sessions/**/*.md
+sessions/**/*.json
+sessions/**/*.md
+
+# Keep repo docs/fixtures trackable
+!README.md
+!docs/**/*.md
+!Tests/**/Fixtures/**/*.json
+

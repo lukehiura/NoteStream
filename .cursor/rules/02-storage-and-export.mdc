@@ -1,0 +1,27 @@
+---
+description: Simple session-on-disk storage for v1.
+alwaysApply: true
+---
+
+# Storage & export (v1)
+
+## Session folder (source of truth)
+
+Persist each recording session as a single folder under a user-visible directory:
+
+- `audio.m4a` (always write, even if rolling transcription is enabled)
+- `metadata.json` (app version, sample rate, channels, model, timestamps)
+- `transcript.rolling.json` (optional, for crash recovery)
+- `transcript.final.json` and `transcript.final.md`
+- `notes.json` and `notes.md` (optional)
+
+## Performance rule
+
+- Do not write every draft update to disk.
+- Use periodic checkpoints (e.g. ~60s) and on stop/pause/background.
+
+## Integrity rule
+
+- If audio gaps/dropped buffers are detected, insert **gap markers** into the transcript model.
+- Never “smooth over” missing audio with invented text.
+

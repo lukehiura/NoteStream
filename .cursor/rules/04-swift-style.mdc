@@ -1,0 +1,25 @@
+---
+description: Swift style rules (Google/stdlib-aligned) for NoteStream.
+alwaysApply: true
+---
+
+# Swift style (NoteStream)
+
+Follow a standard-library / Google Swift Style aligned style:
+
+- **UTF-8 only**, spaces for indentation (no tabs).
+- **No semicolons**.
+- **One statement per line** (except allowed single-statement blocks).
+- **K&R braces** (`} else {` on one line).
+- **No horizontal alignment** with extra spaces (avoid “tabular” alignment in code).
+- **Avoid force unwrap/cast** in production code (allowed in tests when appropriate).
+- **Prefer shorthand types** (`[T]`, `[K: V]`, `T?`) when possible.
+- **Guard for early exits**; keep main logic less-indented.
+- **Keep lines ≤ 100 columns** unless it would harm readability (e.g., long URLs).
+- **Imports are explicit and minimal** (don’t rely on transitive imports).
+
+When adding new Swift files, prefer naming by primary type:
+
+- `TypeName.swift`
+- `TypeName+Protocol.swift` for protocol-conformance extensions
+

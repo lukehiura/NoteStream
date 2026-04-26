@@ -1,0 +1,21 @@
+---
+description: NoteStream core goals + guardrails for v1.
+alwaysApply: true
+---
+
+# NoteStream — project context
+
+macOS-only lecture notes app with **local transcription** and **system audio capture**.
+
+## Non-negotiables (v1)
+
+- Prefer **Swift / SwiftUI** over web frontends.
+- Capture uses **ScreenCaptureKit** (system audio) + **AVFoundation** (conversion).
+- Transcription uses **WhisperKit** locally.
+- Market v1 as **rolling transcription** (updates every few seconds) + **final cleanup after stop**.
+- Do **not** implement SwiftData/CoreData in v1. Persist sessions as **folders + JSON + Markdown**.
+
+## Product principle
+
+**The live transcript can lag, but it must not jump.**
+

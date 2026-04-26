@@ -1,0 +1,36 @@
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+  - .swiftpm
+  - Packages
+  - DerivedData
+
+reporter: github-actions-logging
+
+disabled_rules:
+  - file_length
+  - type_body_length
+  - function_body_length
+  - identifier_name
+  - trailing_newline
+  - trailing_comma
+  - opening_brace
+  - for_where
+  - large_tuple
+  - sorted_imports
+  - trailing_whitespace
+  - line_length
+
+opt_in_rules:
+  - empty_count
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - sorted_imports
+
+cyclomatic_complexity:
+  warning: 12
+  error: 20
+
