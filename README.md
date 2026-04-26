@@ -27,17 +27,27 @@ It is designed for lectures, meetings, podcasts, videos, interviews, and long re
 
 ## Current release status
 
-NoteStream is currently distributed as a **developer preview**: an **unsigned, ad-hoc–signed** app inside a **zip** on [GitHub Releases](https://github.com/lukehiura/NoteStream/releases). It is **not** a notarized or Developer ID–signed build, so it is not a “download and double-click for everyone” product yet.
+NoteStream is currently distributed as a **developer preview**: an **unsigned, ad-hoc–signed** app on [GitHub Releases](https://github.com/lukehiura/NoteStream/releases) as either a **zip** or a **DMG** (pick one; same build, same Gatekeeper expectations). It is **not** notarized or Developer ID–signed, so it is not a “download and double-click for everyone” product yet.
 
 ### Developer preview (download from GitHub Releases)
 
-1. Download the latest `NoteStream-x.y.z-developer-preview.zip`.
+**Option A — ZIP**
+
+1. Download `NoteStream-x.y.z-developer-preview.zip`.
 2. Unzip it; read `README-DEVELOPER-PREVIEW.txt` inside the zip.
 3. Move `NoteStream.app` to your Applications folder (optional).
 4. Open the app. If macOS blocks it, go to **System Settings → Privacy & Security** and use **Open Anyway** (or allow as prompted).
 5. Grant **Screen Recording** when macOS asks (required for system audio).
 
-Do not use developer preview builds if you are uncomfortable running unsigned software, even from a zip you trust. For the **safest** path, [build from source](#build-from-source) on your own machine.
+**Option B — DMG**
+
+1. Download `NoteStream-x.y.z.dmg`.
+2. Open the disk image; read `README-DEVELOPER-PREVIEW-DMG.txt` if shown.
+3. Drag **NoteStream.app** to **Applications**, then open it from Applications.
+4. If macOS blocks it, use **System Settings → Privacy & Security → Open Anyway** as needed.
+5. Grant **Screen Recording** when macOS asks.
+
+Do not use developer preview builds if you are uncomfortable running unsigned software, even from a zip or DMG you trust. For the **safest** path, [build from source](#build-from-source) on your own machine.
 
 ### Build from source
 
@@ -49,8 +59,6 @@ swift run NoteStreamApp
 ```
 
 Or use the repo [Makefile](Makefile) (`make check`, `make run`). Development setup details are in `docs/development.md`.
-
-A signed, notarized macOS installer is **not** available yet; that would require an Apple Developer Program membership.
 
 ## First-time setup
 
@@ -448,8 +456,10 @@ Install Xcode, then run:
 
 ```bash
 swift build
-swift test
+make test
 ```
+
+(`make test` runs `swift test` with flags that match CI; prefer it over a bare `swift test` on Swift 6 toolchains.)
 
 ### Continuous integration
 

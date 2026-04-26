@@ -14,6 +14,12 @@ make fast
 make test
 ```
 
+To build the same **developer preview** artifacts CI publishes (ad-hoc–signed zip + DMG, not notarized):
+
+```bash
+make preview-dmg
+```
+
 ## Full verification
 
 ```bash
@@ -27,6 +33,18 @@ For lint without building or testing:
 ```bash
 make quality
 ```
+
+## SwiftPM tests: XCTest vs Swift Testing
+
+SwiftPM can generate a test harness that imports the Swift **Testing** module. Whether you pass **`--disable-swift-testing`** to `swift test` depends on how the package is wired:
+
+- **This repo (XCTest-only targets, no `swift-testing` in `Package.swift`):** always pass **`--disable-swift-testing`** in CI, `Makefile`, and `scripts/dev-check.sh`. Otherwise the harness may `import Testing` and fail with **missing `_TestingInternals`**, because the toolchain path does not match a standalone XCTest-only package.
+
+- **`swift-testing` is listed in `Package.swift` and tests use `@Test` / `#expect`:** use plain **`swift test`** (do **not** pass `--disable-swift-testing`), or those tests will not run correctly.
+
+If you change layout or toggle dependencies, run **`swift package clean`** once locally if you see a stale harness.
+
+There is no `swift test --use-xctest` flag; see `swift test --help` for `--disable-swift-testing` and `--enable-xctest`.
 
 ## Git hooks
 

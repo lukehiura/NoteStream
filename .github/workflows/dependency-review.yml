@@ -1,3 +1,5 @@
+# Requires Dependency graph (Settings → Code security and analysis). Without it,
+# the action fails with: "Dependency review is not supported on this repository."
 name: Dependency Review
 
 on:

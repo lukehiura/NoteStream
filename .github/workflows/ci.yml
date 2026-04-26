@@ -46,14 +46,21 @@ jobs:
       - name: Resolve
         run: swift package resolve
 
+      # Avoid compiling a stale SwiftPM test harness (e.g. after swift-testing removal) when
+      # Actions cache restore-keys rehydrate an older .build tree.
+      - name: Clean SwiftPM build
+        run: swift package clean
+
       - name: Build debug
         run: swift build -v
 
       - name: Build release
         run: swift build -c release -v
 
+      # With swift-testing in Package.swift: plain swift test. After an XCTest-only
+      # migration (no swift-testing dependency), use --disable-swift-testing (as below).
       - name: Test with coverage
-        run: swift test --enable-code-coverage -v
+        run: swift test --enable-code-coverage --disable-swift-testing -v
 
       - name: Python tools check
         run: make python-tools-check

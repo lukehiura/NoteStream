@@ -1,4 +1,4 @@
-.PHONY: bootstrap hooks doctor fast check build release test lint format markdownlint python-tools-check shellcheck actionlint quality preview preview-version gh-harden run clean
+.PHONY: bootstrap hooks doctor fast check build release test lint format markdownlint python-tools-check shellcheck actionlint quality preview preview-version preview-dmg preview-dmg-version gh-harden run clean
 
 bootstrap:
 	scripts/bootstrap.sh
@@ -22,7 +22,7 @@ release:
 	swift build -c release
 
 test:
-	swift test --enable-code-coverage
+	swift test --enable-code-coverage --disable-swift-testing
 
 lint:
 	swift-format lint --strict --recursive Sources Tests
@@ -51,6 +51,13 @@ preview:
 preview-version:
 	@test -n "$(VERSION)" || (echo "Usage: make preview-version VERSION=0.1.0-beta.1" && exit 1)
 	scripts/build-preview-app-zip.sh $(VERSION)
+
+preview-dmg:
+	scripts/build-preview-dmg.sh dev
+
+preview-dmg-version:
+	@test -n "$(VERSION)" || (echo "Usage: make preview-dmg-version VERSION=0.1.0-beta.1" && exit 1)
+	scripts/build-preview-dmg.sh $(VERSION)
 
 gh-harden:
 	scripts/gh-repo-harden.sh

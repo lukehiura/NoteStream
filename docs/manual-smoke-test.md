@@ -7,7 +7,7 @@ Run these before adding rolling/live transcription.
 ```bash
 swift package resolve
 swift build
-swift test
+make test
 swift-format lint --recursive Sources Tests
 ```
 

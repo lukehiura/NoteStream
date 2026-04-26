@@ -1,22 +1,24 @@
 import Foundation
-import Testing
+import XCTest
 
 @testable import NoteStreamCore
 
-@Test func llmProviderRoundTripRawValue() {
-  for provider in LLMProvider.allCases {
-    #expect(LLMProvider(rawValue: provider.rawValue) == provider)
+final class LLMProviderTests: XCTestCase {
+  func testLlmProviderRoundTripRawValue() {
+    for provider in LLMProvider.allCases {
+      XCTAssertEqual(LLMProvider(rawValue: provider.rawValue), provider)
+    }
   }
-}
 
-@Test func llmProviderTitlesAreNonEmpty() {
-  for provider in LLMProvider.allCases {
-    #expect(!provider.title.isEmpty)
+  func testLlmProviderTitlesAreNonEmpty() {
+    for provider in LLMProvider.allCases {
+      XCTAssertFalse(provider.title.isEmpty)
+    }
   }
-}
 
-@Test func localLLMPresetRoundTripRawValue() {
-  for preset in LocalLLMPreset.allCases {
-    #expect(LocalLLMPreset(rawValue: preset.rawValue) == preset)
+  func testLocalLLMPresetRoundTripRawValue() {
+    for preset in LocalLLMPreset.allCases {
+      XCTAssertEqual(LocalLLMPreset(rawValue: preset.rawValue), preset)
+    }
   }
 }
