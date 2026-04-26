@@ -77,21 +77,20 @@ struct ContentView: View {
     } message: {
       Text(model.errorMessage ?? "Unknown error")
     }
-    .alert("Rename session", isPresented: $showingRename) {
-      TextField("Session name", text: $renameText)
-
-      Button("Save") {
-        if let renameTargetID {
-          model.renameSession(id: renameTargetID, title: renameText)
-        }
-        showingRename = false
+    .sheet(isPresented: $showingRename) {
+      if let renameTargetID,
+        let session = model.sessions.first(where: { $0.id == renameTargetID })
+      {
+        RenameSessionSheet(
+          model: model,
+          sessionID: session.id,
+          originalTitle: session.title,
+          suggestedTitle: model.generatedTitle,
+          onClose: {
+            showingRename = false
+          }
+        )
       }
-
-      Button("Cancel", role: .cancel) {
-        showingRename = false
-      }
-    } message: {
-      Text("Use a short readable name.")
     }
     .alert("Rename speaker", isPresented: $showingRenameSpeaker) {
       TextField("Display name", text: $renameSpeakerFieldText)

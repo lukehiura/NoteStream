@@ -34,6 +34,9 @@ format:
 markdownlint:
 	markdownlint README.md docs/**/*.md
 
+python-tools-check:
+	python3 -m py_compile docs/tools/notestream-diarize-pyannote.py
+
 # Starts the app and keeps running until you quit NoteStream.
 # Use this only for manual local development.
 run:

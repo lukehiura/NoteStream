@@ -262,71 +262,7 @@ struct TranscriptView: View {
       .help(copiedTranscript ? "Copied" : "Copy transcript")
       .disabled(model.transcriptMarkdown.isEmpty)
 
-      Menu {
-        Button("Save Markdown…") {
-          do {
-            let base = (model.selectedFileName ?? "transcript")
-              .replacingOccurrences(of: ".", with: "_")
-            try SavePanelExporter.saveMarkdown(
-              model.transcriptMarkdown,
-              suggestedFileName: "\(base).md"
-            )
-          } catch {
-            model.errorMessage = String(describing: error)
-            model.showingError = true
-          }
-        }
-
-        Button("Save Text…") {
-          do {
-            let base = (model.selectedFileName ?? "transcript")
-              .replacingOccurrences(of: ".", with: "_")
-            try SavePanelExporter.saveText(
-              model.transcriptPlainText,
-              suggestedFileName: "\(base).txt"
-            )
-          } catch {
-            model.errorMessage = String(describing: error)
-            model.showingError = true
-          }
-        }
-
-        Button("Save SRT…") {
-          do {
-            let base = (model.selectedFileName ?? "transcript")
-              .replacingOccurrences(of: ".", with: "_")
-            let srt = TranscriptSRTFormatter.srt(from: model.allSegments)
-            try SavePanelExporter.saveSRT(srt, suggestedFileName: "\(base).srt")
-          } catch {
-            model.errorMessage = String(describing: error)
-            model.showingError = true
-          }
-        }
-
-        Button("Save Session JSON…") {
-          do {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            encoder.dateEncodingStrategy = .iso8601
-
-            let payload = ExportedTranscript(
-              title: model.selectedFileName ?? "Transcript",
-              segments: model.allSegments,
-              notesMarkdown: model.notesMarkdown
-            )
-
-            let data = try encoder.encode(payload)
-            try SavePanelExporter.saveJSON(data, suggestedFileName: "session-export.json")
-          } catch {
-            model.errorMessage = String(describing: error)
-            model.showingError = true
-          }
-        }
-      } label: {
-        Image(systemName: "square.and.arrow.down")
-      }
-      .buttonStyle(.bordered)
-      .help("Export")
+      TranscriptExportMenu(model: model)
 
       Button {
         model.openSelectedSessionFolder()

@@ -63,4 +63,22 @@ enum SavePanelExporter {
     }
     try data.write(to: url, options: .atomic)
   }
+
+  static func saveVTT(_ text: String, suggestedFileName: String) throws {
+    let panel = NSSavePanel()
+    panel.canCreateDirectories = true
+    panel.allowedContentTypes = [UTType(filenameExtension: "vtt") ?? .plainText]
+    panel.nameFieldStringValue = suggestedFileName
+
+    guard panel.runModal() == .OK, let url = panel.url else { return }
+    guard let data = text.data(using: .utf8) else {
+      throw NSError(
+        domain: "NoteStream", code: 7,
+        userInfo: [
+          NSLocalizedDescriptionKey: "Failed to encode VTT as UTF-8."
+        ])
+    }
+
+    try data.write(to: url, options: .atomic)
+  }
 }
