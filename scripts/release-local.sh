@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Future path: requires Apple Developer Program membership, a committed Xcode app target,
+# Developer ID signing, and notarization. Do not use for the current developer-preview
+# distribution (see scripts/build-preview-app-zip.sh and docs/release-checklist.md).
 set -euo pipefail
 
 VERSION="${1:?Usage: scripts/release-local.sh 0.1.0}"

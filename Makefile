@@ -1,4 +1,4 @@
-.PHONY: bootstrap hooks doctor fast check build release test lint format markdownlint run clean
+.PHONY: bootstrap hooks doctor fast check build release test lint format markdownlint python-tools-check preview preview-version run clean
 
 bootstrap:
 	scripts/bootstrap.sh
@@ -36,6 +36,13 @@ markdownlint:
 
 python-tools-check:
 	python3 -m py_compile docs/tools/notestream-diarize-pyannote.py
+
+preview:
+	scripts/build-preview-app-zip.sh dev
+
+preview-version:
+	@test -n "$(VERSION)" || (echo "Usage: make preview-version VERSION=0.1.0-beta.1" && exit 1)
+	scripts/build-preview-app-zip.sh $(VERSION)
 
 # Starts the app and keeps running until you quit NoteStream.
 # Use this only for manual local development.

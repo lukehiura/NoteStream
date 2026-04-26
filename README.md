@@ -25,24 +25,32 @@ It is designed for lectures, meetings, podcasts, videos, interviews, and long re
 - Local AI notes require Ollama.
 - Real speaker labels require an external diarization tool and a Hugging Face token.
 
-## Install NoteStream
+## Current release status
 
-If you downloaded a release:
+NoteStream is currently distributed as a **developer preview**: an **unsigned, ad-hoc–signed** app inside a **zip** on [GitHub Releases](https://github.com/lukehiura/NoteStream/releases). It is **not** a notarized or Developer ID–signed build, so it is not a “download and double-click for everyone” product yet.
 
-1. Download the latest `NoteStream.dmg`.
-2. Open the DMG.
-3. Drag `NoteStream.app` into your Applications folder.
-4. Open NoteStream.
-5. Grant Screen Recording permission when macOS asks.
-6. Quit and reopen NoteStream if macOS tells you to.
+### Developer preview (download from GitHub Releases)
 
-If macOS blocks the app, open:
+1. Download the latest `NoteStream-x.y.z-developer-preview.zip`.
+2. Unzip it; read `README-DEVELOPER-PREVIEW.txt` inside the zip.
+3. Move `NoteStream.app` to your Applications folder (optional).
+4. Open the app. If macOS blocks it, go to **System Settings → Privacy & Security** and use **Open Anyway** (or allow as prompted).
+5. Grant **Screen Recording** when macOS asks (required for system audio).
 
-```text
-System Settings → Privacy & Security
+Do not use developer preview builds if you are uncomfortable running unsigned software, even from a zip you trust. For the **safest** path, [build from source](#build-from-source) on your own machine.
+
+### Build from source
+
+From the repository root:
+
+```bash
+brew install swift-format swiftlint markdownlint-cli
+swift run NoteStreamApp
 ```
 
-Then allow NoteStream.
+Or use the repo [Makefile](Makefile) (`make check`, `make run`). Development setup details are in `docs/development.md`.
+
+A signed, notarized macOS installer is **not** available yet; that would require an Apple Developer Program membership.
 
 ## First-time setup
 

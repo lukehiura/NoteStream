@@ -1,0 +1,63 @@
+name: Developer Preview Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "v*.*.*-*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: developer-preview-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  developer-preview-release:
+    name: Build developer preview zip
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show versions
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-release-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-release-
+
+      - name: Install tools
+        run: |
+          brew install swift-format swiftlint markdownlint-cli
+
+      - name: Run checks
+        run: make check
+
+      - name: Build preview app zip
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          scripts/build-preview-app-zip.sh "$VERSION"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ZIP="build/NoteStream-${VERSION}-developer-preview.zip"
+
+          gh release create "$GITHUB_REF_NAME" "$ZIP" \
+            --title "NoteStream ${VERSION} (Developer Preview)" \
+            --generate-notes \
+            --prerelease \
+            --verify-tag
