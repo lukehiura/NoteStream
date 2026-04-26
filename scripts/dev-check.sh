@@ -13,7 +13,8 @@ echo "Building release..."
 swift build -c release
 
 echo "Running tests with coverage..."
-swift test --enable-code-coverage
+# XCTest-only: avoid SPM importing toolchain Swift Testing (requires swift-testing package / _TestingInternals).
+swift test --enable-code-coverage --disable-swift-testing
 
 echo "Developer check passed."
 

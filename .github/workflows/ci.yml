@@ -53,7 +53,7 @@ jobs:
         run: swift build -c release -v
 
       - name: Test with coverage
-        run: swift test --enable-code-coverage -v
+        run: swift test --enable-code-coverage --disable-swift-testing -v
 
       - name: Python tools check
         run: make python-tools-check

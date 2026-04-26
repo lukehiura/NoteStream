@@ -1,6 +1,6 @@
 import Foundation
 import NoteStreamCore
-import Testing
+import XCTest
 
 @testable import NoteStreamInfrastructure
 
@@ -11,9 +11,8 @@ private func writeExecutableScript(directory: URL, name: String, contents: Strin
   return url
 }
 
-@Suite("ExternalJSONNotesSummarizer")
-struct ExternalJSONNotesSummarizerTests {
-  @Test func parsesValidJSONFromStdout() async throws {
+final class ExternalJSONNotesSummarizerTests: XCTestCase {
+  func testParsesValidJSONFromStdout() async throws {
     let tmp = FileManager.default.temporaryDirectory
       .appendingPathComponent("NoteStreamAdapterTests-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
@@ -38,12 +37,12 @@ struct ExternalJSONNotesSummarizerTests {
       )
     )
 
-    #expect(result.title == "Lecture")
-    #expect(result.summaryMarkdown.contains("Summary"))
-    #expect(result.keyPoints == ["a"])
+    XCTAssertEqual(result.title, "Lecture")
+    XCTAssertTrue(result.summaryMarkdown.contains("Summary"))
+    XCTAssertEqual(result.keyPoints, ["a"])
   }
 
-  @Test func surfacesStderrOnNonZeroExit() async throws {
+  func testSurfacesStderrOnNonZeroExit() async throws {
     let tmp = FileManager.default.temporaryDirectory
       .appendingPathComponent("NoteStreamAdapterTests-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
@@ -63,23 +62,22 @@ struct ExternalJSONNotesSummarizerTests {
     let summarizer = ExternalJSONNotesSummarizer(executableURL: script)
 
     do {
-      try await summarizer.summarize(
+      _ = try await summarizer.summarize(
         NotesSummarizationRequest(
           transcriptMarkdown: "hello",
           previousNotesMarkdown: nil,
           mode: .final
         )
       )
-      Issue.record("Expected summarize to throw")
+      XCTFail("Expected summarize to throw")
     } catch let error as NSError {
-      #expect(error.localizedDescription.contains("simulated adapter failure"))
+      XCTAssertTrue(error.localizedDescription.contains("simulated adapter failure"))
     }
   }
 }
 
-@Suite("ExternalJSONSpeakerDiarizer")
-struct ExternalJSONSpeakerDiarizerTests {
-  @Test func parsesSpeakerTurnsJSON() async throws {
+final class ExternalJSONSpeakerDiarizerTests: XCTestCase {
+  func testParsesSpeakerTurnsJSON() async throws {
     let tmp = FileManager.default.temporaryDirectory
       .appendingPathComponent("NoteStreamAdapterTests-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
@@ -100,12 +98,12 @@ struct ExternalJSONSpeakerDiarizerTests {
     let diarizer = ExternalJSONSpeakerDiarizer(executableURL: script)
     let result = try await diarizer.diarize(audioURL: audio, expectedSpeakerCount: 2)
 
-    #expect(result.turns.count == 2)
-    #expect(result.speakerCount == 2)
-    #expect(result.turns.allSatisfy { $0.speakerID.hasPrefix("speaker_") })
+    XCTAssertEqual(result.turns.count, 2)
+    XCTAssertEqual(result.speakerCount, 2)
+    XCTAssertTrue(result.turns.allSatisfy { $0.speakerID.hasPrefix("speaker_") })
   }
 
-  @Test func nonZeroExitPropagatesMessage() async throws {
+  func testNonZeroExitPropagatesMessage() async throws {
     let tmp = FileManager.default.temporaryDirectory
       .appendingPathComponent("NoteStreamAdapterTests-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
@@ -127,14 +125,14 @@ struct ExternalJSONSpeakerDiarizerTests {
     let diarizer = ExternalJSONSpeakerDiarizer(executableURL: script)
 
     do {
-      try await diarizer.diarize(audioURL: audio, expectedSpeakerCount: nil)
-      Issue.record("Expected diarize to throw")
+      _ = try await diarizer.diarize(audioURL: audio, expectedSpeakerCount: nil)
+      XCTFail("Expected diarize to throw")
     } catch let error as NSError {
-      #expect(error.localizedDescription.contains("diarizer stderr"))
+      XCTAssertTrue(error.localizedDescription.contains("diarizer stderr"))
     }
   }
 
-  @Test func speakerDiarizerPassesHuggingFaceTokenEnvironment() async throws {
+  func testSpeakerDiarizerPassesHuggingFaceTokenEnvironment() async throws {
     let tmp = FileManager.default.temporaryDirectory
       .appendingPathComponent("NoteStreamAdapterTests-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
@@ -166,7 +164,7 @@ struct ExternalJSONSpeakerDiarizerTests {
 
     let result = try await diarizer.diarize(audioURL: audio, expectedSpeakerCount: 1)
 
-    #expect(result.turns.count == 1)
-    #expect(result.turns[0].speakerID == "speaker_1")
+    XCTAssertEqual(result.turns.count, 1)
+    XCTAssertEqual(result.turns[0].speakerID, "speaker_1")
   }
 }

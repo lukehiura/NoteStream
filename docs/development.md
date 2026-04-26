@@ -28,6 +28,8 @@ For lint without building or testing:
 make quality
 ```
 
+Tests run with **`swift test --disable-swift-testing`** (see `Makefile` and `scripts/dev-check.sh`) so SwiftPM does not generate a harness that imports toolchain Swift Testing while this package uses XCTest-only targets.
+
 ## Git hooks
 
 Install hooks:

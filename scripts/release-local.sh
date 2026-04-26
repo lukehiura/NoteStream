@@ -17,7 +17,7 @@ rm -rf build
 mkdir -p build
 
 echo "Running tests..."
-swift test
+swift test --disable-swift-testing
 
 echo "Archiving..."
 xcodebuild \

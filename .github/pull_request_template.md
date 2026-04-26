@@ -15,7 +15,7 @@ What changed?
 ## Checklist
 
 - [ ] `make fast` passes
-- [ ] `swift test` passes, if logic changed
+- [ ] `make test` (or `make check`) passes, if logic changed
 - [ ] No audio, transcript, session, diagnostics, or API key files committed
 - [ ] User-facing text is clear
 - [ ] Errors have recovery actions where reasonable

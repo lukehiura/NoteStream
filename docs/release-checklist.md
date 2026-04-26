@@ -25,7 +25,7 @@ Requires an **Apple Developer Program** membership, a **committed Xcode project*
 
 ## Before tagging (quality bar)
 
-- [ ] `swift test` (or `make check`)
+- [ ] `make check` (includes `make test` with CI-aligned flags)
 - [ ] Build + run the app locally (from source or from the preview zip)
 - [ ] Run `docs/manual-smoke-test.md` when making meaningful changes
 - [ ] Verify first-run setup, Screen Recording permission, system audio capture, Stop & Transcribe, import audio, save/load sessions, exports, AI off by default, diagnostics export safety

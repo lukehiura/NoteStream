@@ -448,8 +448,10 @@ Install Xcode, then run:
 
 ```bash
 swift build
-swift test
+make test
 ```
+
+(`make test` runs `swift test` with flags that match CI; prefer it over a bare `swift test` on Swift 6 toolchains.)
 
 ### Continuous integration
 

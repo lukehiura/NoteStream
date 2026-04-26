@@ -1,14 +1,16 @@
-import Testing
+import XCTest
 
 @testable import NoteStreamCore
 
-@Test func rmsOfSilenceIsZero() async throws {
-  let meter = RMSMeter()
-  #expect(meter.rms(of: [0, 0, 0]) == 0)
-}
+final class RMSMeterTests: XCTestCase {
+  func testRmsOfSilenceIsZero() async throws {
+    let meter = RMSMeter()
+    XCTAssertEqual(meter.rms(of: [0, 0, 0]), 0)
+  }
 
-@Test func rmsOfConstantSignal() async throws {
-  let meter = RMSMeter()
-  let value = meter.rms(of: [0.5, 0.5, 0.5])
-  #expect(abs(value - 0.5) < 0.0001)
+  func testRmsOfConstantSignal() async throws {
+    let meter = RMSMeter()
+    let value = meter.rms(of: [0.5, 0.5, 0.5])
+    XCTAssertEqual(value, 0.5, accuracy: 0.0001)
+  }
 }
