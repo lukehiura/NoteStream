@@ -93,10 +93,8 @@ public final class ExternalJSONSpeakerDiarizer: SpeakerDiarizing, @unchecked Sen
   private static func normalizedTurns(_ turns: [SpeakerTurn]) -> [SpeakerTurn] {
     var order: [String] = []
     var seen = Set<String>()
-    for turn in turns {
-      if seen.insert(turn.speakerID).inserted {
-        order.append(turn.speakerID)
-      }
+    for turn in turns where seen.insert(turn.speakerID).inserted {
+      order.append(turn.speakerID)
     }
     let mapping = Dictionary(
       uniqueKeysWithValues: order.enumerated().map { index, oldID in

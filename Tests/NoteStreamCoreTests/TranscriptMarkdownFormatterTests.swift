@@ -4,7 +4,7 @@ import Testing
 @testable import NoteStreamCore
 
 @Test func markdownEmptySegmentsIsEmpty() async throws {
-  #expect(TranscriptMarkdownFormatter.markdown(from: []) == "")
+  #expect(TranscriptMarkdownFormatter.markdown(from: []).isEmpty)
 }
 
 @Test func markdownOneSegment() async throws {

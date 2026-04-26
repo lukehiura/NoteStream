@@ -20,6 +20,14 @@ make test
 make check
 ```
 
+`make fast` runs `swift-format`, SwiftLint, Markdownlint, ShellCheck (`scripts/*.sh` and `.githooks/*`), and actionlint (`.github/workflows/*.yml`). Install those tools with Homebrew (`Brewfile` includes them) or run `make bootstrap`.
+
+For lint without building or testing:
+
+```bash
+make quality
+```
+
 ## Git hooks
 
 Install hooks:

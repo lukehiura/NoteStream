@@ -20,6 +20,8 @@ check "Swift" "swift --version"
 check "swift-format" "swift-format --version"
 check "SwiftLint" "swiftlint version"
 check "markdownlint" "markdownlint --version"
+check "ShellCheck" "shellcheck --version"
+check "actionlint" "actionlint -version"
 check "git" "git --version"
 
 if command -v ollama >/dev/null 2>&1; then
