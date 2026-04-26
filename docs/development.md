@@ -20,6 +20,17 @@ make test
 make check
 ```
 
+## SwiftPM tests: XCTest vs Swift Testing
+
+SwiftPM can generate a test harness that imports the Swift **Testing** module. Whether you pass **`--disable-swift-testing`** to `swift test` depends on how this package is wired:
+
+- **This repo lists `swift-testing` in `Package.swift` and tests use `@Test` / `#expect`:** run plain `swift test` (same as today on `main`). Do **not** pass `--disable-swift-testing`, or those tests will not run correctly.
+- **Tests are XCTest-only and the `swift-testing` package is removed from `Package.swift`:** always pass **`--disable-swift-testing`** (CI, `Makefile`, `scripts/dev-check.sh`). Otherwise the harness may `import Testing` and fail with **missing `_TestingInternals`**, because the toolchain path does not match a standalone XCTest-only package.
+
+If you change layout, run `swift package clean` once locally if you see a stale harness after toggling dependencies.
+
+There is no `swift test --use-xctest` flag; see `swift test --help` for `--disable-swift-testing` and `--enable-xctest`.
+
 ## Git hooks
 
 Install hooks:

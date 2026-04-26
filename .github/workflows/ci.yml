@@ -52,6 +52,8 @@ jobs:
       - name: Build release
         run: swift build -c release -v
 
+      # With swift-testing in Package.swift: plain swift test. After an XCTest-only
+      # migration (no swift-testing dependency), append --disable-swift-testing.
       - name: Test with coverage
         run: swift test --enable-code-coverage -v
 
