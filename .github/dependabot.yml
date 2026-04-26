@@ -9,11 +9,6 @@ updates:
     labels:
       - "dependencies"
       - "swift"
-    # swift-testing 6.x+ requires Swift tools 6.2+; this package is still swift-tools-version 5.9.
-    # Stay on the 0.x line until the repo migrates to Swift 6.2+ and drops the standalone package.
-    ignore:
-      - dependency-name: "swift-testing"
-        versions: [">= 6.0.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   preview-release:
-    name: Build developer preview zip
+    name: Build developer preview zip and DMG
     runs-on: macos-15
 
     steps:
@@ -55,10 +55,10 @@ jobs:
       - name: Run full checks
         run: make check
 
-      - name: Build developer preview zip
+      - name: Build developer preview zip and DMG
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          scripts/build-preview-app-zip.sh "$VERSION"
+          scripts/build-preview-dmg.sh "$VERSION"
 
       - name: Create GitHub Release
         env:
@@ -66,9 +66,23 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           ZIP="build/NoteStream-${VERSION}-developer-preview.zip"
+          DMG="build/NoteStream-${VERSION}.dmg"
+          README_DMG="build/README-DEVELOPER-PREVIEW-DMG.txt"
+          NOTES="build/preview-release-notes.md"
 
-          gh release create "$GITHUB_REF_NAME" "$ZIP" \
+          printf '%s\n' \
+            "## NoteStream ${VERSION} developer preview" \
+            "" \
+            "This build is **ad-hoc signed** only. It is **not** Developer ID signed and **not** notarized. macOS may require you to approve the app under **System Settings → Privacy & Security** (Open Anyway)." \
+            "" \
+            "- **ZIP:** unzip, then open NoteStream.app (README-DEVELOPER-PREVIEW.txt is inside the zip)." \
+            "- **DMG:** open the disk image, drag NoteStream.app to Applications, then open the app (README-DEVELOPER-PREVIEW-DMG.txt is included in the DMG and attached to this release)." \
+            "" \
+            "For distribution outside the Mac App Store without Gatekeeper friction, Apple documents [Developer ID](https://developer.apple.com/support/developer-id/) and [notarization](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution). See docs/release-checklist.md for release expectations." \
+            > "$NOTES"
+
+          gh release create "$GITHUB_REF_NAME" "$ZIP" "$DMG" "$README_DMG" \
             --title "NoteStream ${VERSION} Developer Preview" \
-            --generate-notes \
+            --notes-file "$NOTES" \
             --prerelease \
             --verify-tag
