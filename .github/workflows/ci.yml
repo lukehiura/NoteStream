@@ -13,7 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
+  swift-checks:
+    name: Swift checks
     runs-on: macos-15
 
     steps:
@@ -39,35 +40,8 @@ jobs:
         run: |
           brew install swift-format swiftlint markdownlint-cli
 
-      - name: Check no private recording artifacts are committed
-        run: |
-          set -euo pipefail
-
-          forbidden="$(git ls-files | grep -Ei '(\.(caf|wav|m4a|mp3|flac|aiff)$|(^|/)Sessions(/|$)|(^|/)sessions(/|$)|(^|/)diagnostics\.jsonl$|(^|/)app\.jsonl$)' || true)"
-
-          if [ -n "$forbidden" ]; then
-            echo "Forbidden private/local artifacts are committed:"
-            echo "$forbidden"
-            exit 1
-          fi
-
-      - name: Check for obvious API keys
-        run: scripts/check-secrets.sh
-
-      - name: swift-format lint
-        run: swift-format lint --strict --recursive Sources Tests
-
-      - name: SwiftLint
-        run: swiftlint lint --strict --reporter github-actions-logging
-
-      - name: Markdown lint
-        run: |
-          set -euo pipefail
-          md_files=(README.md)
-          if [ -d docs ]; then
-            while IFS= read -r -d '' f; do md_files+=("$f"); done < <(find docs -name '*.md' -print0)
-          fi
-          markdownlint "${md_files[@]}"
+      - name: Fast check
+        run: scripts/fast-check.sh
 
       - name: Resolve
         run: swift package resolve
@@ -80,6 +54,9 @@ jobs:
 
       - name: Test with coverage
         run: swift test --enable-code-coverage -v
+
+      - name: Python tools check
+        run: make python-tools-check
 
       - name: Upload debug build artifacts
         if: success()

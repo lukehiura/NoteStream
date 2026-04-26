@@ -33,6 +33,29 @@ Hooks live in `.githooks/`.
 - `pre-commit`: fast formatting, linting, secret checks, and artifact checks
 - `pre-push`: full local verification
 
+## GitHub repo hardening (maintainers)
+
+After `gh auth login`, you can apply default labels, read-only Actions workflow permissions, and optional branch/tag rules from the repo root:
+
+```bash
+chmod +x scripts/gh-repo-harden.sh
+./scripts/gh-repo-harden.sh
+```
+
+After CI has reported the required check **Swift checks** at least once on `main`, enable branch protection:
+
+```bash
+APPLY_BRANCH_PROTECTION=1 ./scripts/gh-repo-harden.sh
+```
+
+Optional tag protection ruleset (requires GitHub rulesets support for the repo):
+
+```bash
+APPLY_TAG_RULESET=1 ./scripts/gh-repo-harden.sh
+```
+
+If you are the only maintainer and required reviews block merges, use `GH_REQUIRED_REVIEW_COUNT=0` when applying branch protection.
+
 ## Sensitive files
 
 Never commit:

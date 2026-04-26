@@ -30,7 +30,7 @@ if [ ! -f "$BINARY_PATH" ]; then
   exit 1
 fi
 
-echo "Creating .app bundle..."
+echo "Creating unsigned .app bundle..."
 cp "$BINARY_PATH" "$MACOS_DIR/$EXECUTABLE_NAME"
 chmod +x "$MACOS_DIR/$EXECUTABLE_NAME"
 

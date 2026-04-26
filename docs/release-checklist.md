@@ -11,6 +11,10 @@ This repo ships as a Swift package. **Current distribution** is a **developer pr
 - [ ] Push the tag; confirm `.github/workflows/developer-preview-release.yml` completes
 - [ ] GitHub Release shows `NoteStream-<version>-developer-preview.zip`
 
+On `main`, CI exposes the required check name **Swift checks** (configure in branch protection after it has run once).
+
+Tag format must match semver-style `vMAJOR.MINOR.PATCH` or `vMAJOR.MINOR.PATCH-prerelease` (for example `v0.1.0-beta.1`) so the release workflow validation passes.
+
 ## Future: notarized macOS release
 
 Requires an **Apple Developer Program** membership, a **committed Xcode project** (or app target) with a shared **NoteStream** scheme, and secrets/certs configured for CI or local `scripts/release-local.sh`.
