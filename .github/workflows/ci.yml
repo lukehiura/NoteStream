@@ -60,7 +60,7 @@ jobs:
 
       - name: Upload debug build artifacts
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: notestream-debug-build
           path: .build/**/NoteStreamApp
@@ -68,7 +68,7 @@ jobs:
 
       - name: Upload debug artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-debug
           path: |
