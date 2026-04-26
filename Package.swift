@@ -22,7 +22,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/argmaxinc/WhisperKit", from: "0.18.0"),
-        .package(url: "https://github.com/apple/swift-testing.git", from: "0.12.0")
+        .package(url: "https://github.com/apple/swift-testing.git", .upToNextMajor(from: "0.12.0"))
     ],
     targets: [
         .target(
