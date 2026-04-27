@@ -27,11 +27,9 @@ It is designed for lectures, meetings, podcasts, videos, interviews, and long re
 
 ## Current release status
 
-NoteStream is currently distributed as a **developer preview**: an **unsigned, ad-hoc–signed** app on [GitHub Releases](https://github.com/lukehiura/NoteStream/releases) as either a **zip** or a **DMG** (pick one; same build, same Gatekeeper expectations). It is **not** notarized or Developer ID–signed, so it is not a “download and double-click for everyone” product yet.
+NoteStream is currently distributed as a **developer preview**: an **unsigned, ad-hoc–signed** app on [GitHub Releases](https://github.com/lukehiura/NoteStream/releases) as a **zip** only (`NoteStream-x.y.z-developer-preview.zip`). It is **not** notarized or Developer ID–signed, so it is not a “download and double-click for everyone” product yet. If you prefer a disk image, you can build one locally with `make preview-dmg` or `make preview-dmg-version VERSION=x.y.z` from this repository (same trust model as the zip).
 
 ### Developer preview (download from GitHub Releases)
-
-**Option A — ZIP**
 
 1. Download `NoteStream-x.y.z-developer-preview.zip`.
 2. Unzip it; read `README-DEVELOPER-PREVIEW.txt` inside the zip.
@@ -39,15 +37,7 @@ NoteStream is currently distributed as a **developer preview**: an **unsigned, a
 4. Open the app. If macOS blocks it, go to **System Settings → Privacy & Security** and use **Open Anyway** (or allow as prompted).
 5. Grant **Screen Recording** when macOS asks (required for system audio).
 
-**Option B — DMG**
-
-1. Download `NoteStream-x.y.z.dmg`.
-2. Open the disk image; read `README-DEVELOPER-PREVIEW-DMG.txt` if shown.
-3. Drag **NoteStream.app** to **Applications**, then open it from Applications.
-4. If macOS blocks it, use **System Settings → Privacy & Security → Open Anyway** as needed.
-5. Grant **Screen Recording** when macOS asks.
-
-Do not use developer preview builds if you are uncomfortable running unsigned software, even from a zip or DMG you trust. For the **safest** path, [build from source](#build-from-source) on your own machine.
+Do not use developer preview builds if you are uncomfortable running unsigned software, even from a zip you trust. For the **safest** path, [build from source](#build-from-source) on your own machine.
 
 ### Build from source
 
@@ -459,7 +449,7 @@ swift build
 make test
 ```
 
-(`make test` runs `swift test` with flags that match CI; prefer it over a bare `swift test` on Swift 6 toolchains.)
+(`make test` / **`make test-fast`** run XCTest with **`--disable-swift-testing`**. CI runs **`scripts/ci-check.sh`**, which includes **`make test-coverage`**. Prefer these targets over a bare `swift test` on Swift 6 toolchains.)
 
 ### Continuous integration
 

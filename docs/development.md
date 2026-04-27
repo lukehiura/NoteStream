@@ -6,15 +6,54 @@
 make bootstrap
 ```
 
+### Stacked PRs (Aviator CLI, optional)
+
+[Aviator `av`](https://github.com/aviator-co/av) sits on top of Git: it tracks branch parent/child relationships in `.git/av/av.db` so you can open **stacked** pull requests, restack after merges, and run `av sync` instead of hand-rebasing chains of branches. It uses the same GitHub token as **`gh`** when `gh` is installed and authenticated (`gh auth login`).
+
+**One-time per clone** (after `git clone`):
+
+```bash
+av init
+```
+
+**Typical flow** (from `main`):
+
+```bash
+git switch main && git pull
+av branch my-feature          # or: av commit -A -m "msg" --branch-name my-feature
+# edit, then:
+av commit -A -m "Describe change"   # restacks children; use -a/--all like git
+av pr                               # create or update PR for current branch
+av tree                             # show stack and PR links
+```
+
+After a parent PR merges, **`av sync`** fetches, restacks descendants onto `main`, and prompts about push and deleting merged local branches.
+
+Branches you created with plain **`git switch -c`** before using `av` are not tracked until you run **`av adopt`** (optionally `--parent main`) so `av tree` includes them. If **`av commit`** prints *current branch is not adopted* after committing, the commit still recorded; adopt the branch once, then later **`av commit`** runs will restack children as usual.
+
+Shell completion (zsh): `source <(av completion zsh)` (Homebrew installs completion under `/opt/homebrew/share/zsh/site-functions` for `av`).
+
+Full reference: [Aviator CLI docs](https://docs.aviator.co/aviator-cli/).
+
 ## Daily workflow
 
 ```bash
 make run
 make fast
-make test
+make test          # fast XCTest run, no coverage (same as make test-fast)
 ```
 
-To build the same **developer preview** artifacts CI publishes (ad-hoc–signed zip + DMG, not notarized):
+For a **single** test: `make test-one FILTER=NoteStreamCoreTests.AudioFrameTests/testAudioFrameDurationSecondsMono`.
+
+CI and **`scripts/ci-check.sh`** use **`make test-coverage`** (slower).
+
+To build the same **developer preview zip** CI publishes on GitHub Releases (ad-hoc–signed, not notarized):
+
+```bash
+make preview
+```
+
+Optional local **DMG** (not attached to GitHub Releases):
 
 ```bash
 make preview-dmg
@@ -38,7 +77,7 @@ make quality
 
 SwiftPM can generate a test harness that imports the Swift **Testing** module. Whether you pass **`--disable-swift-testing`** to `swift test` depends on how the package is wired:
 
-- **This repo (XCTest-only targets, no `swift-testing` in `Package.swift`):** always pass **`--disable-swift-testing`** in CI, `Makefile`, and `scripts/dev-check.sh`. Otherwise the harness may `import Testing` and fail with **missing `_TestingInternals`**, because the toolchain path does not match a standalone XCTest-only package.
+- **This repo (XCTest-only targets, no `swift-testing` in `Package.swift`):** always pass **`--disable-swift-testing`** in CI, the `Makefile` (`make test-fast`, `make test-coverage`, `make test-one`), and `scripts/ci-check.sh`. Otherwise the harness may `import Testing` and fail with **missing `_TestingInternals`**, because the toolchain path does not match a standalone XCTest-only package.
 
 - **`swift-testing` is listed in `Package.swift` and tests use `@Test` / `#expect`:** use plain **`swift test`** (do **not** pass `--disable-swift-testing`), or those tests will not run correctly.
 
@@ -57,7 +96,7 @@ make hooks
 Hooks live in `.githooks/`.
 
 - `pre-commit`: fast formatting, linting, secret checks, and artifact checks
-- `pre-push`: full local verification
+- `pre-push`: `scripts/fast-check.sh` and **`make test-fast`** (no release build or coverage)
 
 ## GitHub repo hardening (maintainers)
 

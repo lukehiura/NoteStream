@@ -1,4 +1,4 @@
-.PHONY: bootstrap hooks doctor fast check build release test lint format markdownlint python-tools-check shellcheck actionlint quality preview preview-version preview-dmg preview-dmg-version gh-harden run clean
+.PHONY: bootstrap hooks doctor fast check release-check build release test test-fast test-core test-infra test-coverage test-one ci-check lint format markdownlint python-tools-check shellcheck actionlint quality preview preview-version preview-dmg preview-dmg-version gh-harden run clean
 
 bootstrap:
 	scripts/bootstrap.sh
@@ -15,14 +15,39 @@ fast:
 check:
 	scripts/dev-check.sh
 
+# Local gate before tagging: fast checks, dev check (debug + fast tests), then a dev preview zip.
+release-check: fast check preview
+
+ci-check:
+	scripts/ci-check.sh
+
 build:
 	swift build
 
 release:
 	swift build -c release
 
-test:
+# Default local test command: fast, readable, no coverage.
+test: test-fast
+
+test-fast:
+	swift test --disable-swift-testing
+
+test-core:
+	swift test --filter NoteStreamCoreTests --disable-swift-testing
+
+test-infra:
+	swift test --filter NoteStreamInfrastructureTests --disable-swift-testing
+
+# Slower. Use in CI/main/release checks, not constant local iteration.
+test-coverage:
 	swift test --enable-code-coverage --disable-swift-testing
+
+# Usage:
+# make test-one FILTER=ExternalJSONNotesSummarizerTests/testParsesValidJSONFromStdout
+test-one:
+	@test -n "$(FILTER)" || (echo "Usage: make test-one FILTER=SomeTestClass/testName" && exit 1)
+	swift test --filter "$(FILTER)" --disable-swift-testing
 
 lint:
 	swift-format lint --strict --recursive Sources Tests
@@ -69,4 +94,3 @@ run:
 
 clean:
 	rm -rf .build
-
