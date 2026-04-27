@@ -11,7 +11,8 @@ make bootstrap
 ```bash
 make fast
 make check
-make test
+make test          # fast, no coverage — same as make test-fast
+make test-coverage # when you need CI-parity coverage locally
 make run
 ```
 

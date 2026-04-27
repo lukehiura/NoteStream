@@ -122,12 +122,14 @@ final class ExternalJSONNotesSummarizerTests: XCTestCase {
       contents: """
         #!/bin/sh
         cat >/dev/null
-        sleep 120
-        printf '%s\\n' '{"title":"Late","summaryMarkdown":"","keyPoints":[],"actionItems":[],"openQuestions":[]}'
+        while :; do
+          :
+        done
         """
     )
 
-    let summarizer = ExternalJSONNotesSummarizer(executableURL: script, timeoutSeconds: 2)
+    let summarizer = ExternalJSONNotesSummarizer(executableURL: script, timeoutSeconds: 1)
+    let start = Date()
 
     do {
       _ = try await summarizer.summarize(
@@ -139,9 +141,15 @@ final class ExternalJSONNotesSummarizerTests: XCTestCase {
       )
       XCTFail("Expected summarize to throw on timeout")
     } catch let error as NSError {
+      let elapsed = Date().timeIntervalSince(start)
+
       XCTAssertEqual(error.domain, "NoteStream")
       XCTAssertEqual(error.code, 71)
       XCTAssertTrue(error.localizedDescription.contains("timed out"))
+      XCTAssertLessThan(
+        elapsed, 5,
+        "Timeout test should finish quickly."
+      )
     }
   }
 }

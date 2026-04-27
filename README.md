@@ -449,7 +449,7 @@ swift build
 make test
 ```
 
-(`make test` runs `swift test` with flags that match CI; prefer it over a bare `swift test` on Swift 6 toolchains.)
+(`make test` / **`make test-fast`** run XCTest with **`--disable-swift-testing`**. CI runs **`scripts/ci-check.sh`**, which includes **`make test-coverage`**. Prefer these targets over a bare `swift test` on Swift 6 toolchains.)
 
 ### Continuous integration
 

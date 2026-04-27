@@ -2,6 +2,8 @@
 set -euo pipefail
 
 echo "Running pre-push checks..."
-scripts/dev-check.sh
-echo "Pre-push checks passed."
 
+scripts/fast-check.sh
+make test-fast
+
+echo "Pre-push checks passed."

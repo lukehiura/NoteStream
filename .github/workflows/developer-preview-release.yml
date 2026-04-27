@@ -52,8 +52,9 @@ jobs:
             exit 1
           fi
 
-      - name: Run full checks
-        run: make check
+      - name: Run CI checks (release build + coverage)
+        timeout-minutes: 25
+        run: scripts/ci-check.sh
 
       - name: Build developer preview zip
         run: |

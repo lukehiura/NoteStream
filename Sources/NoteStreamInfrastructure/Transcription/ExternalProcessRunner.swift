@@ -96,23 +96,21 @@ enum ExternalProcessRunner {
     }
   }
 
+  /// `Process.waitUntilExit()` blocks indefinitely; running it on the Swift default executor can
+  /// starve concurrent tasks (including our timeout `Task.sleep`) on small CI thread pools. Poll
+  /// with async sleep and reap exit on a utility queue instead.
   private static func waitForTermination(
     _ process: Process,
     timeoutSeconds: UInt64
   ) async throws -> Int32 {
-    try await withThrowingTaskGroup(of: Int32.self) { group in
-      group.addTask {
-        process.waitUntilExit()
-        return process.terminationStatus
-      }
+    let deadline = Date().addingTimeInterval(TimeInterval(timeoutSeconds))
 
-      group.addTask {
-        try await Task.sleep(nanoseconds: timeoutSeconds * 1_000_000_000)
-
+    while process.isRunning {
+      if Date() >= deadline {
         if process.isRunning {
           process.terminate()
         }
-
+        await waitUntilExitOffCooperativePool(process)
         throw NSError(
           domain: "NoteStream",
           code: 71,
@@ -122,19 +120,19 @@ enum ExternalProcessRunner {
           ]
         )
       }
+      try await Task.sleep(nanoseconds: 50_000_000)
+    }
 
-      guard let result = try await group.next() else {
-        throw NSError(
-          domain: "NoteStream",
-          code: 72,
-          userInfo: [
-            NSLocalizedDescriptionKey: "External process did not return a result."
-          ]
-        )
+    await waitUntilExitOffCooperativePool(process)
+    return process.terminationStatus
+  }
+
+  private static func waitUntilExitOffCooperativePool(_ process: Process) async {
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      DispatchQueue.global(qos: .utility).async {
+        process.waitUntilExit()
+        continuation.resume()
       }
-
-      group.cancelAll()
-      return result
     }
   }
 }

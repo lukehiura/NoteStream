@@ -40,8 +40,12 @@ Full reference: [Aviator CLI docs](https://docs.aviator.co/aviator-cli/).
 ```bash
 make run
 make fast
-make test
+make test          # fast XCTest run, no coverage (same as make test-fast)
 ```
+
+For a **single** test: `make test-one FILTER=NoteStreamCoreTests.AudioFrameTests/testAudioFrameDurationSecondsMono`.
+
+CI and **`scripts/ci-check.sh`** use **`make test-coverage`** (slower).
 
 To build the same **developer preview zip** CI publishes on GitHub Releases (ad-hoc–signed, not notarized):
 
@@ -73,7 +77,7 @@ make quality
 
 SwiftPM can generate a test harness that imports the Swift **Testing** module. Whether you pass **`--disable-swift-testing`** to `swift test` depends on how the package is wired:
 
-- **This repo (XCTest-only targets, no `swift-testing` in `Package.swift`):** always pass **`--disable-swift-testing`** in CI, `Makefile`, and `scripts/dev-check.sh`. Otherwise the harness may `import Testing` and fail with **missing `_TestingInternals`**, because the toolchain path does not match a standalone XCTest-only package.
+- **This repo (XCTest-only targets, no `swift-testing` in `Package.swift`):** always pass **`--disable-swift-testing`** in CI, the `Makefile` (`make test-fast`, `make test-coverage`, `make test-one`), and `scripts/ci-check.sh`. Otherwise the harness may `import Testing` and fail with **missing `_TestingInternals`**, because the toolchain path does not match a standalone XCTest-only package.
 
 - **`swift-testing` is listed in `Package.swift` and tests use `@Test` / `#expect`:** use plain **`swift test`** (do **not** pass `--disable-swift-testing`), or those tests will not run correctly.
 
@@ -92,7 +96,7 @@ make hooks
 Hooks live in `.githooks/`.
 
 - `pre-commit`: fast formatting, linting, secret checks, and artifact checks
-- `pre-push`: full local verification
+- `pre-push`: `scripts/fast-check.sh` and **`make test-fast`** (no release build or coverage)
 
 ## GitHub repo hardening (maintainers)
 
