@@ -39,7 +39,7 @@ jobs:
 
       - name: Install tools
         run: |
-          brew install swift-format swiftlint markdownlint-cli
+          brew install swift-format swiftlint markdownlint-cli shellcheck actionlint
 
       - name: Check version tag
         run: |
