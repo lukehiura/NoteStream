@@ -45,17 +45,24 @@ let package = Package(
                 .process("Resources")
             ]
         ),
+        .target(
+            name: "NoteStreamTestSupport",
+            dependencies: ["NoteStreamCore"],
+            path: "Tests/NoteStreamTestSupport"
+        ),
         .testTarget(
             name: "NoteStreamCoreTests",
             dependencies: [
-                "NoteStreamCore"
+                "NoteStreamCore",
+                "NoteStreamTestSupport",
             ]
         ),
         .testTarget(
             name: "NoteStreamInfrastructureTests",
             dependencies: [
                 "NoteStreamCore",
-                "NoteStreamInfrastructure"
+                "NoteStreamInfrastructure",
+                "NoteStreamTestSupport",
             ]
         )
     ]

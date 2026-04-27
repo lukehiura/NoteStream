@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+export REPO_ROOT
+cd "$REPO_ROOT"
+
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/script-lock.sh"
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/swiftpm.sh"
+acquire_repo_lock
+
 echo "Checking Xcode command line tools..."
 xcodebuild -version >/dev/null
 
@@ -13,13 +24,13 @@ else
 fi
 
 echo "Resolving Swift package dependencies..."
-swift package resolve
+swiftpm package resolve
 
 echo "Installing git hooks..."
-scripts/install-git-hooks.sh
+"$SCRIPT_DIR/install-git-hooks.sh"
 
 echo "Running fast check..."
-scripts/fast-check.sh
+"$SCRIPT_DIR/check.sh" fast
 
 echo "Bootstrap complete."
 

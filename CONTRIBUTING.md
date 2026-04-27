@@ -1,50 +1,35 @@
 # Contributing to NoteStream
 
-## Setup
-
-```bash
-make bootstrap
-```
-
-## Common commands
-
-```bash
-make fast
-make check
-make test          # fast, no coverage — same as make test-fast
-make test-coverage # when you need CI-parity coverage locally
-make ci-check        # fast-check + resolve + debug/release build + test-fast (no coverage)
-make release-verify  # same gate as a version tag (clean + coverage)
-make run
-```
-
-## Running the app locally
-
-```bash
-make run
-```
-
-This starts the macOS app and keeps running until you quit NoteStream. Do not use `make run` in hooks or CI.
-
-For automated checks, use:
-
-```bash
-make fast
-make check
-```
-
-## Rules
-
-- Do not commit recordings, transcripts, diagnostics, or local session folders.
-- Do not commit API keys or Hugging Face tokens.
-- Keep `NoteStreamCore` UI-free.
-- Put macOS APIs and external adapters in `NoteStreamInfrastructure`.
-- Keep SwiftUI views thin (compose UI; keep policy in view models / Core).
-- Add tests for core logic and adapter contracts.
-- Do not log transcript text, notes text, prompts, raw model responses, audio contents, or API keys.
-
 ## Before opening a PR
 
 ```bash
 make check
 ```
+
+For full local setup, targets, and CI behavior, see [`docs/development.md`](docs/development.md). For architecture, see [`docs/architecture.md`](docs/architecture.md). For release and signing, see [`docs/release.md`](docs/release.md).
+
+## Code style
+
+- **Swift:** match existing formatting (`make format` / `make fast`). `NoteStreamCore` stays free of AppKit and SwiftUI.
+- **Adapters and I/O** live in `NoteStreamInfrastructure`.
+- **SwiftUI** stays relatively thin; policy belongs in view models and Core.
+- **Secrets / privacy:** do not log transcript text, prompts, or API keys. Do not commit recordings, session folders, or diagnostics.
+
+## Tests
+
+- Add or update tests for Core logic and infrastructure adapters.
+- Use `make test-fast`; coverage when behavior warrants it (`make test-coverage`).
+
+## PR checklist
+
+- [ ] `make check` passes
+- [ ] New behavior covered by tests where practical
+- [ ] User-visible changes noted in `CHANGELOG.md`
+- [ ] No secrets, recordings, or local artifacts in the branch
+
+## Documentation
+
+- **Setup / commands:** `docs/development.md`
+- **Layering and flows:** `docs/architecture.md`
+- **Releases and previews:** `docs/release.md`
+- **Incident-style fixes (SwiftPM, etc.):** `docs/troubleshooting.md`

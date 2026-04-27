@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Stage NoteStream.app (+ optional readme) and wrap in a compressed disk image.
-# Used by developer-preview DMG builds (scripts/build-preview-dmg.sh).
+# Used by developer-preview DMG builds (packaging/build-preview-dmg.sh).
 set -euo pipefail
 
-APP_PATH="${1:?Usage: scripts/create-dmg.sh path/to/NoteStream.app 0.1.0}"
-VERSION="${2:?Usage: scripts/create-dmg.sh path/to/NoteStream.app 0.1.0}"
+APP_PATH="${1:?Usage: scripts/packaging/create-dmg.sh path/to/NoteStream.app 0.1.0}"
+VERSION="${2:?Usage: scripts/packaging/create-dmg.sh path/to/NoteStream.app 0.1.0}"
 README_EXTRA="${3:-}"
 
 DMG_PATH="build/NoteStream-${VERSION}.dmg"

@@ -1,20 +1,28 @@
-# Security Policy
+# Security
+
+## Supported versions
+
+Security-sensitive reports should reference the **latest developer preview** (see [Releases](https://github.com/lukehiura/NoteStream/releases)) or your **local build** from `main` at the time of the report. There is no separate long-term support line yet.
 
 ## Reporting a vulnerability
 
-Please do not open a public issue for security-sensitive reports.
+Do not use public issues for sensitive reports.
 
 Email: **YOUR_SECURITY_EMAIL** (replace with a monitored address before publishing widely)
 
 Include:
 
-- NoteStream version
+- NoteStream version (tag or commit)
 - macOS version
-- steps to reproduce
-- whether the issue involves recordings, transcripts, API keys, Hugging Face tokens, or diagnostics
+- Steps to reproduce
+- Whether recordings, transcripts, API keys, Hugging Face tokens, or diagnostics are involved
 
-## Sensitive data
+## Sensitive data and local use
 
-NoteStream may process private audio, transcripts, notes, diagnostics, API keys, and Hugging Face tokens.
+- Do not commit **recordings**, **transcripts**, **API keys**, **tokens**, **session data**, or **diagnostics** to the repository or public issues.
+- The app stores sessions under `~/Documents/NoteStream/` by default. Treat that as **local, user-controlled** data; follow platform guidance for full-disk encryption and backups.
+- **Cloud LLM** providers receive transcript (or prompt) text you send when you use those features; use **local** models (e.g. Ollama) if you need to avoid sending text off-device.
 
-Do not attach private recordings, transcripts, notes, diagnostics, or credentials to public GitHub issues.
+## General
+
+Read [`README.md`](README.md) and [`docs/development.md`](docs/development.md) for what belongs in git vs. on disk only.

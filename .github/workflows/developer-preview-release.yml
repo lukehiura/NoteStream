@@ -17,6 +17,8 @@ jobs:
   preview-release:
     name: Build developer preview zip
     runs-on: macos-15
+    env:
+      NOTESTREAM_SCRIPT_LOCK_WAIT_SEC: 5
 
     steps:
       - name: Checkout
@@ -54,12 +56,12 @@ jobs:
 
       - name: Release verify (clean, release build, coverage)
         timeout-minutes: 25
-        run: scripts/release-verify.sh
+        run: scripts/check.sh release
 
       - name: Build developer preview zip
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          scripts/build-preview-app-zip.sh "$VERSION"
+          scripts/packaging/build-preview-app-zip.sh "$VERSION"
 
       - name: Create GitHub Release
         env:
@@ -72,13 +74,10 @@ jobs:
           printf '%s\n' \
             "## NoteStream ${VERSION} developer preview" \
             "" \
-            "This build is **ad-hoc signed** only. It is **not** Developer ID signed and **not** notarized. macOS may require you to approve the app under **System Settings → Privacy & Security** (Open Anyway)." \
+            "Developer preview: **ad-hoc signed** only; **not** Developer ID; **not** notarized. See **[docs/release.md](https://github.com/lukehiura/NoteStream/blob/main/docs/release.md)** for trust model, checklist, and Apple signing doc links." \
             "" \
-            "- **ZIP:** unzip, then open NoteStream.app (README-DEVELOPER-PREVIEW.txt is inside the zip)." \
-            "" \
-            "You can still build a local DMG with \`make preview-dmg-version VERSION=${VERSION}\` (not published on GitHub Releases)." \
-            "" \
-            "For distribution outside the Mac App Store without Gatekeeper friction, Apple documents [Developer ID](https://developer.apple.com/support/developer-id/) and [notarization](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution). See docs/release-checklist.md for release expectations." \
+            "- **ZIP** (this asset): includes a short \`README-DEVELOPER-PREVIEW.txt\` pointing to that doc." \
+            "- **DMG:** \`make preview-dmg-version VERSION=${VERSION}\` locally (not published here)." \
             > "$NOTES"
 
           gh release create "$GITHUB_REF_NAME" "$ZIP" \

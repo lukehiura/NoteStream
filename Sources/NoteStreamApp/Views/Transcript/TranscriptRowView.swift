@@ -39,14 +39,14 @@ struct TranscriptRowView: View {
   private var lineForClipboard: String {
     let text = segment.text.trimmingCharacters(in: .whitespacesAndNewlines)
     if let speakerLabel {
-      return "[\(TranscriptFormatting.formatTimestamp(segment.startTime))] \(speakerLabel): \(text)"
+      return "[\(DurationFormatting.timestamp(segment.startTime))] \(speakerLabel): \(text)"
     }
-    return "[\(TranscriptFormatting.formatTimestamp(segment.startTime))] \(text)"
+    return "[\(DurationFormatting.timestamp(segment.startTime))] \(text)"
   }
 
   var body: some View {
     HStack(alignment: .top, spacing: 12) {
-      Text(TranscriptFormatting.formatTimestamp(segment.startTime))
+      Text(DurationFormatting.timestamp(segment.startTime))
         .font(.caption.monospacedDigit())
         .foregroundStyle(.secondary)
         .padding(.horizontal, 8)

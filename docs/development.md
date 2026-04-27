@@ -1,138 +1,89 @@
 # Development
 
-## Local setup
+This document covers **local developer setup and daily commands** only. For **release, signing, and preview artifacts**, see `release.md`. For **stuck SwiftPM / locks / tests**, see `troubleshooting.md`.
+
+## 1. Prerequisites
+
+- macOS 14+
+- Xcode command line tools (`xcodebuild -version`)
+- Homebrew (used by `make bootstrap` / `Brewfile`)
+
+## 2. Bootstrap
 
 ```bash
 make bootstrap
 ```
 
-### Stacked PRs (Aviator CLI, optional)
+Installs tools from the Brewfile, resolves packages, installs git hooks, and runs `make fast` (lints).
 
-[Aviator `av`](https://github.com/aviator-co/av) sits on top of Git: it tracks branch parent/child relationships in `.git/av/av.db` so you can open **stacked** pull requests, restack after merges, and run `av sync` instead of hand-rebasing chains of branches. It uses the same GitHub token as **`gh`** when `gh` is installed and authenticated (`gh auth login`).
+## 3. Daily commands
 
-**One-time per clone** (after `git clone`):
+Makefile targets are the source of truth; these are the ones most people need:
 
-```bash
-av init
-```
+| Task | Command |
+|------|---------|
+| Install tools and hooks | `make bootstrap` |
+| Quick lints (no full `swift build` in `check.sh fast`) | `make fast` |
+| Normal pre-PR / dev check (resolve, debug build, fast tests, `python3 -m py_compile` on diarize helper) | `make check` |
+| Stricter check (adds release build + Python) | `make full-check` (alias `make ci-check`) |
+| Run tests (fast, no coverage) | `make test-fast` |
+| Coverage tests | `make test-coverage` |
+| Full release gate (as for a tag) | `make release-verify` |
+| Build (debug) | `make build` |
+| Build release binary | `make release` |
+| Run the app (local only) | `make run` |
+| All linters + secrets + large-file report | `make quality` |
+| Build preview zip | `make preview` or `make preview-version VERSION=x.y.z` |
+| Build preview DMG (local) | `make preview-dmg` or `make preview-dmg-version VERSION=x.y.z` |
 
-**Typical flow** (from `main`):
+Run `make` with no target to see if your `make` lists targets, or read the [Makefile](../Makefile) comments.
 
-```bash
-git switch main && git pull
-av branch my-feature          # or: av commit -A -m "msg" --branch-name my-feature
-# edit, then:
-av commit -A -m "Describe change"   # restacks children; use -a/--all like git
-av pr                               # create or update PR for current branch
-av tree                             # show stack and PR links
-```
+**PR CI** (`.github/workflows/ci.yml`) runs **`scripts/check.sh dev`** (same as `make check`: lints, resolve, debug build, fast tests, Python tool compile; no release build; no coverage).
 
-After a parent PR merges, **`av sync`** fetches, restacks descendants onto `main`, and prompts about push and deleting merged local branches.
+**Optional — stacked PRs:** [Aviator `av` CLI](https://docs.aviator.co/aviator-cli/) (`av init`, `av pr`) if you use stacked branches.
 
-Branches you created with plain **`git switch -c`** before using `av` are not tracked until you run **`av adopt`** (optionally `--parent main`) so `av tree` includes them. If **`av commit`** prints *current branch is not adopted* after committing, the commit still recorded; adopt the branch once, then later **`av commit`** runs will restack children as usual.
+**Maintainer — GitHub hardening** (labels, optional branch/tag rules): `scripts/admin/gh-repo-harden.sh` (see `release.md`).
 
-Shell completion (zsh): `source <(av completion zsh)` (Homebrew installs completion under `/opt/homebrew/share/zsh/site-functions` for `av`).
+## 4. Testing strategy
 
-Full reference: [Aviator CLI docs](https://docs.aviator.co/aviator-cli/).
+- Default: `make test-fast` (XCTest, `--disable-swift-testing` — see [Makefile](../Makefile) and `scripts/run-swift-test-fast.sh`).
+- Coverage: `make test-coverage` (nightly / manual; `.github/workflows/nightly-coverage.yml`).
+- One test: `make test-one FILTER=NoteStreamCoreTests/AudioFrameTests/testAudioFrameDurationSecondsMono` (see `Makefile` for the `FILTER` pattern).
 
-## Daily workflow
+**Swift Testing vs XCTest:** This repo is wired for XCTest with `--disable-swift-testing` in scripts/Makefile. If you add Swift **Testing** to `Package.swift`, read `swift test --help` and adjust flags — do not mix harness assumptions.
 
-```bash
-make run
-make fast
-make test          # fast XCTest run, no coverage (same as make test-fast)
-```
+## 5. Linting and formatting
 
-For a **single** test: `make test-one FILTER=NoteStreamCoreTests.AudioFrameTests/testAudioFrameDurationSecondsMono`.
+- `make fast` — swift-format, SwiftLint (strict), markdownlint, shellcheck, actionlint, secrets scan.
+- `make format` — apply swift-format in place.
+- `make lint` / `make quality` — see [Makefile](../Makefile).
 
-**Pull request CI** (`.github/workflows/ci.yml`) runs explicit steps: fast-check, resolve, **debug** `swift build`, **`make test-fast`**, and Python compile checks only (no coverage, no preview zip).
-
-**Coverage** runs on a schedule and on demand via **`.github/workflows/nightly-coverage.yml`** (`make test-coverage`).
-
-**Tagged developer previews** run **`scripts/release-verify.sh`** (clean, debug + release build, **`make test-coverage`**, Python). Locally: **`make ci-check`** (fast + release compile + fast tests) or **`make release-verify`** to mirror the tag gate.
-
-To build the same **developer preview zip** CI publishes on GitHub Releases (ad-hoc–signed, not notarized):
-
-```bash
-make preview
-```
-
-Optional local **DMG** (not attached to GitHub Releases):
-
-```bash
-make preview-dmg
-```
-
-## Full verification
-
-```bash
-make check
-```
-
-`make fast` runs `swift-format`, SwiftLint, Markdownlint, ShellCheck (`scripts/*.sh` and `.githooks/*`), and actionlint (`.github/workflows/*.yml`). Install those tools with Homebrew (`Brewfile` includes them) or run `make bootstrap`.
-
-For lint without building or testing:
-
-```bash
-make quality
-```
-
-## SwiftPM tests: XCTest vs Swift Testing
-
-SwiftPM can generate a test harness that imports the Swift **Testing** module. Whether you pass **`--disable-swift-testing`** to `swift test` depends on how the package is wired:
-
-- **This repo (XCTest-only targets, no `swift-testing` in `Package.swift`):** always pass **`--disable-swift-testing`** in CI, the `Makefile` (`make test-fast`, `make test-coverage`, `make test-one`), and the **`scripts/*.sh`** helpers. Otherwise the harness may `import Testing` and fail with **missing `_TestingInternals`**, because the toolchain path does not match a standalone XCTest-only package.
-
-- **`swift-testing` is listed in `Package.swift` and tests use `@Test` / `#expect`:** use plain **`swift test`** (do **not** pass `--disable-swift-testing`), or those tests will not run correctly.
-
-If you change layout or toggle dependencies, run **`swift package clean`** once locally if you see a stale harness.
-
-There is no `swift test --use-xctest` flag; see `swift test --help` for `--disable-swift-testing` and `--enable-xctest`.
-
-## Git hooks
-
-Install hooks:
+## 6. Git hooks
 
 ```bash
 make hooks
 ```
 
-Hooks live in `.githooks/`.
+- **pre-commit:** format/lint/secret checks (see `.githooks/`)
+- **pre-push:** secrets + `make test-fast` (full `make fast` is for CI or before a PR as you prefer)
 
-- `pre-commit`: fast formatting, linting, secret checks, and artifact checks
-- `pre-push`: `scripts/fast-check.sh` and **`make test-fast`** (no release build or coverage)
+## 7. Local data and ignored files
 
-## GitHub repo hardening (maintainers)
+Do not commit: audio, `Sessions/`, diagnostics, real transcripts, API keys, or tokens. See `SECURITY.md` and `.gitignore`.
 
-After `gh auth login`, you can apply default labels, read-only Actions workflow permissions, and optional branch/tag rules from the repo root:
+## 8. See also
 
-```bash
-chmod +x scripts/gh-repo-harden.sh
-./scripts/gh-repo-harden.sh
-```
+- `troubleshooting.md` — SwiftPM lock, permissions, common failures  
+- `release.md` — preview ZIP/DMG, signing, tag workflow  
+- `architecture.md` — module boundaries  
+- `docs/tools/README.md` — external pyannote helper  
 
-After CI has reported the required check **Swift checks** at least once on `main`, enable branch protection:
+## Script map (non-exhaustive)
 
-```bash
-APPLY_BRANCH_PROTECTION=1 ./scripts/gh-repo-harden.sh
-```
-
-Optional tag protection ruleset (requires GitHub rulesets support for the repo):
-
-```bash
-APPLY_TAG_RULESET=1 ./scripts/gh-repo-harden.sh
-```
-
-If you are the only maintainer and required reviews block merges, use `GH_REQUIRED_REVIEW_COUNT=0` when applying branch protection.
-
-## Sensitive files
-
-Never commit:
-
-- audio files
-- session folders
-- diagnostics logs
-- transcripts from real users
-- notes from real users
-- API keys
-- Hugging Face tokens
+| Path | Role |
+|------|------|
+| `scripts/check.sh` | `fast` \| `dev` \| `ci` \| `full` \| `release` check ladder |
+| `scripts/lib/script-lock.sh` | Serialize `check` / tests / packaging. Lock: **`$NOTESTREAM_LOCK_BASE/notestream-script.lock`** (default **`$REPO_ROOT/.lock/`**; not **`.build/`**). Re-entrant when **`NOTESTREAM_REPO_LOCK_HELD=1`**. Timeouts: **`NOTESTREAM_SCRIPT_LOCK_WAIT_SEC`** (default 30) |
+| `scripts/lib/swiftpm.sh` | Time-bounded `swift` (env: `NOTESTREAM_SWIFTPM_TIMEOUT_SEC`, `NOTESTREAM_SWIFT_TEST_TIMEOUT_SEC`) |
+| `scripts/diagnose-swiftpm-lock.sh` | Inspect tooling PIDs; optional `--kill <pid>` |
+| `scripts/packaging/` | Preview app zip / DMG build |

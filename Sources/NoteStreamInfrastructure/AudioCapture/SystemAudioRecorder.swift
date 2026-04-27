@@ -1,3 +1,5 @@
+// Split candidate: ScreenCapture + writer pipeline; remove disable after extracting helpers.
+// swiftlint:disable file_length
 import AVFoundation
 import CoreGraphics
 import CoreMedia
@@ -96,6 +98,7 @@ public final class SystemAudioRecorder: NSObject, @unchecked Sendable, AudioReco
     await frames.stream()
   }
 
+  // swiftlint:disable:next function_body_length
   public func startRecording(outputURL: URL) async throws -> RecordingSession {
     await baseDiagnostics.log(
       .init(level: .info, category: "recorder", message: "recording_start_requested"))

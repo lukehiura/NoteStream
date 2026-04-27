@@ -115,7 +115,7 @@ struct MainWindowHeader: View {
   }
 
   private var transcriptDurationText: String {
-    TranscriptFormatting.formatDuration(model.allSegments.transcriptDuration)
+    DurationFormatting.playbackClock(model.allSegments.transcriptDuration)
   }
 
 }

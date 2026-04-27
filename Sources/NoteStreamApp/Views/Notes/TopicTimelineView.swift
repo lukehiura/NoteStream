@@ -22,7 +22,7 @@ struct TopicTimelineView: View {
             onSeek(item.startTime)
           } label: {
             HStack(alignment: .top, spacing: 8) {
-              Text(TranscriptFormatting.formatTimestamp(item.startTime))
+              Text(DurationFormatting.timestamp(item.startTime))
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
                 .frame(width: 52, alignment: .leading)

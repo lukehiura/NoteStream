@@ -1,40 +1,38 @@
-# Manual smoke test (Phase 2)
+# Manual smoke test
 
-Run these before adding rolling/live transcription.
+Procedural validation before a significant release. For signing and tag process, see `release.md`. For dev setup, see `development.md`.
 
-## Local quality gate
+## Recording
 
-```bash
-swift package resolve
-swift build
-make test
-swift-format lint --recursive Sources Tests
-```
+- [ ] Launch app
+- [ ] Grant Screen Recording (and any other) permissions as prompted
+- [ ] Start system-audio recording; confirm audio path works
+- [ ] Stop; confirm session saves and transcript appears
 
-## File transcription flow
+## File import
 
-1. Open app
-2. Prepare `base.en`
-3. Drag in a short `.m4a` or `.mp3`
-4. Confirm transcript appears
-5. Confirm session appears in sidebar
-6. Quit app
-7. Reopen app
-8. Confirm session reloads
-9. Copy transcript
-10. Save Markdown
+- [ ] Import a short audio file; confirm transcript and sidebar session
 
-## Recording flow
+## Persistence
 
-1. Click Start Recording
-2. Grant Screen Recording permission
-3. Restart app if macOS requires it
-4. Start Recording again
-5. Play 10–20 seconds of audio (YouTube is fine)
-6. Click Stop & Transcribe
-7. Confirm `audio.caf` exists
-8. Open `audio.caf` in QuickTime
-9. Confirm it is audible
-10. Confirm transcript appears
-11. Quit and reopen app
-12. Confirm recorded session reloads
+- [ ] Quit app
+- [ ] Relaunch app
+- [ ] Previous session(s) still present
+
+## Export
+
+- [ ] Export Markdown
+- [ ] Export plain text
+- [ ] Export SRT
+- [ ] Export WebVTT
+
+## AI notes (if you use them)
+
+- [ ] Generate or refresh notes
+- [ ] Ask a recording-scoped question (if enabled)
+- [ ] Induce a provider error once; message is safe and recoverable
+
+## Speaker diarization (if you use it)
+
+- [ ] Debug diarizer path works in DEBUG, or
+- [ ] External diarizer misconfiguration shows a clear error (no crash)

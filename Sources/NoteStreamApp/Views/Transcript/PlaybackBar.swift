@@ -17,7 +17,7 @@ struct PlaybackBar: View {
       }
       .buttonStyle(.bordered)
 
-      Text(TranscriptFormatting.formatTimestamp(model.playback.currentTime))
+      Text(DurationFormatting.timestamp(model.playback.currentTime))
         .font(.caption.monospacedDigit())
         .foregroundStyle(.secondary)
 
@@ -29,7 +29,7 @@ struct PlaybackBar: View {
         in: 0...max(model.playback.duration, 0.001)
       )
 
-      Text(TranscriptFormatting.formatTimestamp(model.playback.duration))
+      Text(DurationFormatting.timestamp(model.playback.duration))
         .font(.caption.monospacedDigit())
         .foregroundStyle(.secondary)
 

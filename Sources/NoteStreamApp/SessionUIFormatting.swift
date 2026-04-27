@@ -20,7 +20,7 @@ enum SessionUIFormatting {
   static func librarySubtitle(for session: LectureSession) -> String {
     let n = session.segments.count
     let end = session.segments.map(\.endTime).max() ?? 0
-    let dur = formatCompactDuration(end)
+    let dur = DurationFormatting.compact(end)
     if n == 0 {
       return "No segments · \(dur)"
     }
@@ -32,17 +32,4 @@ enum SessionUIFormatting {
     SpeechModelDisplay.compactName(for: raw)
   }
 
-  static func formatCompactDuration(_ seconds: TimeInterval) -> String {
-    let total = max(0, Int(seconds.rounded()))
-    let h = total / 3600
-    let m = (total % 3600) / 60
-    let s = total % 60
-    if h > 0 {
-      return m > 0 ? "\(h)h \(m)m" : "\(h)h"
-    }
-    if m > 0 {
-      return s > 0 ? "\(m)m \(s)s" : "\(m)m"
-    }
-    return "\(s)s"
-  }
 }

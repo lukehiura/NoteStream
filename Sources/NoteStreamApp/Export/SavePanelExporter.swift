@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import NoteStreamCore
 import UniformTypeIdentifiers
 
 enum SavePanelExporter {
@@ -8,8 +9,7 @@ enum SavePanelExporter {
       markdown,
       suggestedFileName: suggestedFileName,
       allowedContentTypes: [UTType(filenameExtension: "md") ?? .plainText],
-      encodingFailureMessage: "Failed to encode Markdown as UTF-8.",
-      encodingFailureCode: 3
+      utf8Context: "Markdown export"
     )
   }
 
@@ -18,8 +18,7 @@ enum SavePanelExporter {
       text,
       suggestedFileName: suggestedFileName,
       allowedContentTypes: [.plainText],
-      encodingFailureMessage: "Failed to encode text as UTF-8.",
-      encodingFailureCode: 3
+      utf8Context: "plain text export"
     )
   }
 
@@ -36,8 +35,7 @@ enum SavePanelExporter {
       text,
       suggestedFileName: suggestedFileName,
       allowedContentTypes: [UTType(filenameExtension: "srt") ?? .plainText],
-      encodingFailureMessage: "Failed to encode SRT as UTF-8.",
-      encodingFailureCode: 6
+      utf8Context: "SRT export"
     )
   }
 
@@ -46,8 +44,7 @@ enum SavePanelExporter {
       text,
       suggestedFileName: suggestedFileName,
       allowedContentTypes: [UTType(filenameExtension: "vtt") ?? .plainText],
-      encodingFailureMessage: "Failed to encode VTT as UTF-8.",
-      encodingFailureCode: 7
+      utf8Context: "WebVTT export"
     )
   }
 
@@ -55,15 +52,10 @@ enum SavePanelExporter {
     _ text: String,
     suggestedFileName: String,
     allowedContentTypes: [UTType],
-    encodingFailureMessage: String,
-    encodingFailureCode: Int
+    utf8Context: String
   ) throws {
     guard let data = text.data(using: .utf8) else {
-      throw NSError(
-        domain: "NoteStream", code: encodingFailureCode,
-        userInfo: [
-          NSLocalizedDescriptionKey: encodingFailureMessage
-        ])
+      throw NoteStreamError.utf8EncodingFailed(utf8Context)
     }
 
     try saveData(

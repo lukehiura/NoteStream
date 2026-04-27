@@ -16,14 +16,37 @@ private final class RunningProcessBox: @unchecked Sendable {
     self.process = process
   }
 
+  func clear() {
+    lock.lock()
+    defer { lock.unlock() }
+    process = nil
+  }
+
   func terminate() {
     lock.lock()
     let current = process
     lock.unlock()
 
-    if current?.isRunning == true {
-      current?.terminate()
-    }
+    guard current?.isRunning == true else { return }
+    current?.terminate()
+  }
+}
+
+private final class PipeDataCollector: @unchecked Sendable {
+  private let lock = NSLock()
+  private var data = Data()
+
+  func append(_ chunk: Data) {
+    guard !chunk.isEmpty else { return }
+    lock.lock()
+    data.append(chunk)
+    lock.unlock()
+  }
+
+  func snapshot() -> Data {
+    lock.lock()
+    defer { lock.unlock() }
+    return data
   }
 }
 
@@ -50,12 +73,31 @@ enum ExternalProcessRunner {
         process.environment = environment
       }
 
-      let stdinPipe = Pipe()
       let stdoutPipe = Pipe()
       let stderrPipe = Pipe()
+      let stdoutCollector = PipeDataCollector()
+      let stderrCollector = PipeDataCollector()
+
+      stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
+        stdoutCollector.append(handle.availableData)
+      }
+
+      stderrPipe.fileHandleForReading.readabilityHandler = { handle in
+        stderrCollector.append(handle.availableData)
+      }
+
+      var nullIn: FileHandle?
+      var stdinWritePipe: Pipe?
 
       if stdin != nil {
-        process.standardInput = stdinPipe
+        let pipe = Pipe()
+        stdinWritePipe = pipe
+        process.standardInput = pipe
+      } else {
+        nullIn = FileHandle(forReadingAtPath: "/dev/null")
+        if let nullIn {
+          process.standardInput = nullIn
+        }
       }
 
       process.standardOutput = stdoutPipe
@@ -63,42 +105,57 @@ enum ExternalProcessRunner {
 
       processBox.set(process)
 
-      try process.run()
+      do {
+        try process.run()
 
-      if let stdin {
-        stdinPipe.fileHandleForWriting.write(stdin)
-        try stdinPipe.fileHandleForWriting.close()
+        if let stdin, let pipe = stdinWritePipe {
+          pipe.fileHandleForWriting.write(stdin)
+          try? pipe.fileHandleForWriting.close()
+        }
+
+        let status = try await waitForTermination(
+          process,
+          timeoutSeconds: timeoutSeconds
+        )
+
+        stdoutPipe.fileHandleForReading.readabilityHandler = nil
+        stderrPipe.fileHandleForReading.readabilityHandler = nil
+
+        try? stdinWritePipe?.fileHandleForWriting.close()
+        try? nullIn?.close()
+        try? stdoutPipe.fileHandleForReading.close()
+        try? stderrPipe.fileHandleForReading.close()
+
+        processBox.clear()
+
+        return ExternalProcessResult(
+          terminationStatus: status,
+          stdout: stdoutCollector.snapshot(),
+          stderr: stderrCollector.snapshot()
+        )
+      } catch {
+        stdoutPipe.fileHandleForReading.readabilityHandler = nil
+        stderrPipe.fileHandleForReading.readabilityHandler = nil
+
+        if process.isRunning {
+          process.terminate()
+          await waitUntilExitOffCooperativePool(process)
+        }
+
+        try? stdinWritePipe?.fileHandleForWriting.close()
+        try? nullIn?.close()
+        try? stdoutPipe.fileHandleForReading.close()
+        try? stderrPipe.fileHandleForReading.close()
+
+        processBox.clear()
+
+        throw error
       }
-
-      let stdoutTask = Task.detached(priority: .utility) {
-        stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-      }
-
-      let stderrTask = Task.detached(priority: .utility) {
-        stderrPipe.fileHandleForReading.readDataToEndOfFile()
-      }
-
-      let status = try await waitForTermination(
-        process,
-        timeoutSeconds: timeoutSeconds
-      )
-
-      let stdout = await stdoutTask.value
-      let stderr = await stderrTask.value
-
-      return ExternalProcessResult(
-        terminationStatus: status,
-        stdout: stdout,
-        stderr: stderr
-      )
     } onCancel: {
       processBox.terminate()
     }
   }
 
-  /// `Process.waitUntilExit()` blocks indefinitely; running it on the Swift default executor can
-  /// starve concurrent tasks (including our timeout `Task.sleep`) on small CI thread pools. Poll
-  /// with async sleep and reap exit on a utility queue instead.
   private static func waitForTermination(
     _ process: Process,
     timeoutSeconds: UInt64
@@ -110,7 +167,9 @@ enum ExternalProcessRunner {
         if process.isRunning {
           process.terminate()
         }
+
         await waitUntilExitOffCooperativePool(process)
+
         throw NSError(
           domain: "NoteStream",
           code: 71,
@@ -120,6 +179,7 @@ enum ExternalProcessRunner {
           ]
         )
       }
+
       try await Task.sleep(nanoseconds: 50_000_000)
     }
 
@@ -128,7 +188,7 @@ enum ExternalProcessRunner {
   }
 
   private static func waitUntilExitOffCooperativePool(_ process: Process) async {
-    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+    await withCheckedContinuation { continuation in
       DispatchQueue.global(qos: .utility).async {
         process.waitUntilExit()
         continuation.resume()

@@ -4,7 +4,16 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export REPO_ROOT
+cd "$REPO_ROOT"
+
+# shellcheck disable=SC1091
+. "$REPO_ROOT/scripts/lib/script-lock.sh"
+# shellcheck disable=SC1091
+. "$REPO_ROOT/scripts/lib/swiftpm.sh"
+acquire_repo_lock
+
 ICON_SRC="$REPO_ROOT/Packaging/AppIcon.icns"
 
 VERSION="${1:-dev}"
@@ -24,9 +33,9 @@ rm -rf "$BUILD_ROOT" "$ZIP_PATH"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
 echo "Building SwiftPM release executable..."
-swift build -c release
+swiftpm build -c release
 
-BIN_DIR="$(swift build -c release --show-bin-path)"
+BIN_DIR="$(swiftpm build -c release --show-bin-path)"
 BINARY_PATH="$BIN_DIR/$SWIFTPM_EXECUTABLE_NAME"
 
 if [ ! -f "$BINARY_PATH" ]; then
@@ -98,17 +107,14 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 PLIST
 
 cat > "$BUILD_ROOT/README-DEVELOPER-PREVIEW.txt" <<'TXT'
-NoteStream Developer Preview
+NoteStream — developer preview (ad-hoc signed; not notarized).
 
-This build is ad-hoc signed only (not Developer ID) and is not notarized.
+This zip is a convenience bundle. For signing, Gatekeeper, and release expectations, see
+the repository: docs/release.md in the source tree, or
+https://github.com/lukehiura/NoteStream/blob/main/docs/release.md
 
-To open it:
-1. Unzip this file.
-2. Move NoteStream.app to Applications (optional).
-3. Try opening it.
-4. If macOS blocks it, open System Settings → Privacy & Security and choose Open Anyway.
-
-This preview is intended for testers and developers. A signed, notarized app may be offered later.
+To open: unzip, move NoteStream.app to Applications (optional), then open. If macOS blocks the app,
+use System Settings → Privacy & Security (Open Anyway).
 TXT
 
 echo "Ad-hoc signing app bundle..."

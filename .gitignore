@@ -4,6 +4,7 @@ xcuserdata/
 DerivedData/
 .swiftpm/
 .build/
+.lock/
 *.xcworkspace
 *.xcodeproj/project.xcworkspace/
 *.xcodeproj/xcuserdata/

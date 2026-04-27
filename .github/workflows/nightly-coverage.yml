@@ -17,6 +17,8 @@ jobs:
     name: XCTest with coverage
     runs-on: macos-15
     timeout-minutes: 20
+    env:
+      NOTESTREAM_SCRIPT_LOCK_WAIT_SEC: 5
 
     steps:
       - name: Checkout

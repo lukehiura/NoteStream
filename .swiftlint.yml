@@ -21,11 +21,10 @@ disabled_rules:
   - sorted_imports
 
   # Too noisy for SwiftUI / app code right now.
-  - file_length
-  - type_body_length
-  - function_body_length
   - identifier_name
   - large_tuple
+  # Legitimate uses of file-level disables for known monoliths (see inline comments).
+  - blanket_disable_command
 
 opt_in_rules:
   # Real safety wins.
@@ -79,3 +78,18 @@ nesting:
 
 todo:
   severity: warning
+
+# Size signals: large files/types/functions deserve splits. If a file uses inline `swiftlint:disable`,
+# keep it narrowly scoped and update it as files are decomposed.
+file_length:
+  warning: 500
+  error: 900
+
+type_body_length:
+  warning: 350
+  error: 700
+
+function_body_length:
+  warning: 90
+  # Allow a few long hot paths (e.g. ScreenCapture setup) without silencing the whole file.
+  error: 200

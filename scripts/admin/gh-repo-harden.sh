@@ -7,9 +7,9 @@
 # but if merges block, set GH_REQUIRED_REVIEW_COUNT=0 when applying branch protection.
 #
 # Usage (from repo root):
-#   ./scripts/gh-repo-harden.sh
-#   APPLY_BRANCH_PROTECTION=1 ./scripts/gh-repo-harden.sh   # after CI has reported check "Swift checks"
-#   APPLY_TAG_RULESET=1 ./scripts/gh-repo-harden.sh         # if rulesets are enabled for your org/account
+#   ./scripts/admin/gh-repo-harden.sh
+#   APPLY_BRANCH_PROTECTION=1 ./scripts/admin/gh-repo-harden.sh   # after CI has reported check "Swift checks"
+#   APPLY_TAG_RULESET=1 ./scripts/admin/gh-repo-harden.sh         # if rulesets are enabled for your org/account
 set -euo pipefail
 
 OWNER="${OWNER:-lukehiura}"

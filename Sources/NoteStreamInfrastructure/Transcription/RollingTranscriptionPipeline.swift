@@ -32,7 +32,7 @@ public actor RollingTranscriptionPipeline {
     self.diagnostics = diagnostics
   }
 
-  // swiftlint:disable:next cyclomatic_complexity
+  // swiftlint:disable:next cyclomatic_complexity function_body_length
   public func run(
     frames: AsyncThrowingStream<AudioFrame, Error>,
     model: String

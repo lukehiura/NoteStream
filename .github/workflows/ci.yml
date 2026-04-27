@@ -17,6 +17,9 @@ jobs:
     name: Swift checks
     runs-on: macos-15
     timeout-minutes: 15
+    env:
+      # Local default is 30s; on CI, fail the script lock quickly if a prior step did not release.
+      NOTESTREAM_SCRIPT_LOCK_WAIT_SEC: 5
 
     steps:
       - name: Checkout
@@ -41,25 +44,10 @@ jobs:
         run: |
           brew install swift-format swiftlint markdownlint-cli shellcheck actionlint
 
-      - name: Fast check
-        timeout-minutes: 3
-        run: scripts/fast-check.sh
-
-      - name: Resolve packages
-        timeout-minutes: 5
-        run: swift package resolve
-
-      - name: Build debug
-        timeout-minutes: 8
-        run: swift build
-
-      - name: Run fast tests
-        timeout-minutes: 5
-        run: make test-fast
-
-      - name: Python tools check
-        timeout-minutes: 1
-        run: make python-tools-check
+      # Single ladder: same as `make check` + `make python-tools-check` (lint, resolve, debug build, fast tests, Python).
+      - name: PR check
+        timeout-minutes: 12
+        run: scripts/check.sh dev
 
       - name: Upload debug build artifacts
         if: success()

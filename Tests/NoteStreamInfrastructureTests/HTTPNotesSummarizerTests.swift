@@ -4,26 +4,66 @@ import XCTest
 
 @testable import NoteStreamInfrastructure
 
-/// URLProtocol stub for `HTTPNotesSummarizer` tests (must not run in parallel with itself).
+/// URLProtocol stub for `HTTPNotesSummarizer` tests. Handlers are keyed by `baseURL` (scheme + host + port)
+/// so concurrent tests do not overwrite each other’s responses.
 private final class MockURLProtocol: URLProtocol {
-  nonisolated(unsafe) static var handler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
+  private static let lock = NSLock()
+  private static var handlers: [String: (URLRequest) throws -> (HTTPURLResponse, Data)] = [:]
+
+  private static func registryKey(for url: URL) -> String {
+    guard let host = url.host else { return url.absoluteString }
+    let portPart = url.port.map { ":\($0)" } ?? ""
+    return "\(url.scheme ?? "http")://\(host)\(portPart)"
+  }
+
+  static func setHandler(
+    for baseURL: URL,
+    handler: @escaping (URLRequest) throws -> (HTTPURLResponse, Data)
+  ) {
+    lock.lock()
+    defer { lock.unlock() }
+    handlers[registryKey(for: baseURL)] = handler
+  }
+
+  static func removeHandler(for baseURL: URL) {
+    lock.lock()
+    defer { lock.unlock() }
+    handlers.removeValue(forKey: registryKey(for: baseURL))
+  }
 
   override static func canInit(with request: URLRequest) -> Bool { true }
 
   override static func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
   override func startLoading() {
-    guard let handler = Self.handler else {
+    guard let url = request.url else {
+      client?.urlProtocol(
+        self,
+        didFailWithError: NSError(
+          domain: "MockURLProtocol", code: 2,
+          userInfo: [NSLocalizedDescriptionKey: "Missing URL"]
+        )
+      )
+      return
+    }
+
+    Self.lock.lock()
+    let handler = Self.handlers[Self.registryKey(for: url)]
+    Self.lock.unlock()
+
+    guard let handler = handler else {
       client?.urlProtocol(
         self,
         didFailWithError: NSError(
           domain: "MockURLProtocol", code: 1,
           userInfo: [
-            NSLocalizedDescriptionKey: "Handler not set"
-          ])
+            NSLocalizedDescriptionKey: "No handler registered for \(Self.registryKey(for: url))"
+          ]
+        )
       )
       return
     }
+
     do {
       let (response, data) = try handler(request)
       client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
@@ -41,6 +81,14 @@ private func makeMockSession() -> URLSession {
   let config = URLSessionConfiguration.ephemeral
   config.protocolClasses = [MockURLProtocol.self]
   return URLSession(configuration: config)
+}
+
+/// Unique mock origin per test (no real network; `URLProtocol` intercepts). Uses host, not random ports.
+private func mockBaseURL(testID: String) -> URL {
+  guard let url = URL(string: "https://\(testID).mock.notestream.test") else {
+    preconditionFailure("invalid mock URL")
+  }
+  return url
 }
 
 private func httpBodyData(from request: URLRequest) -> Data? {
@@ -78,7 +126,8 @@ final class HTTPNotesSummarizerTests: XCTestCase {
     ]
     let body = try JSONSerialization.data(withJSONObject: envelope)
 
-    MockURLProtocol.handler = { request in
+    let base = mockBaseURL(testID: "ollama-parse")
+    MockURLProtocol.setHandler(for: base) { request in
       XCTAssertTrue(request.url?.absoluteString.contains("/api/chat") == true)
       let url = try XCTUnwrap(request.url)
       let response = try XCTUnwrap(
@@ -91,9 +140,8 @@ final class HTTPNotesSummarizerTests: XCTestCase {
       )
       return (response, body)
     }
-    defer { MockURLProtocol.handler = nil }
+    defer { MockURLProtocol.removeHandler(for: base) }
 
-    let base = try XCTUnwrap(URL(string: "http://127.0.0.1:9"))
     let config = HTTPNotesSummarizerConfig(
       provider: .ollama, model: "m", baseURL: base, apiKey: nil)
     let summarizer = HTTPNotesSummarizer(config: config, urlSession: makeMockSession())
@@ -132,7 +180,8 @@ final class HTTPNotesSummarizerTests: XCTestCase {
     ]
     let body = try JSONSerialization.data(withJSONObject: root)
 
-    MockURLProtocol.handler = { request in
+    let base = mockBaseURL(testID: "openai-compat")
+    MockURLProtocol.setHandler(for: base) { request in
       XCTAssertTrue(request.url?.path.contains("chat/completions") == true)
       let url = try XCTUnwrap(request.url)
       let response = try XCTUnwrap(
@@ -140,9 +189,8 @@ final class HTTPNotesSummarizerTests: XCTestCase {
       )
       return (response, body)
     }
-    defer { MockURLProtocol.handler = nil }
+    defer { MockURLProtocol.removeHandler(for: base) }
 
-    let base = try XCTUnwrap(URL(string: "http://127.0.0.1:8"))
     let config = HTTPNotesSummarizerConfig(
       provider: .openAICompatible,
       model: "local",
@@ -163,16 +211,16 @@ final class HTTPNotesSummarizerTests: XCTestCase {
   }
 
   func testPropagatesNon2xxHTTPAsError() async throws {
-    MockURLProtocol.handler = { request in
+    let base = mockBaseURL(testID: "http-503")
+    MockURLProtocol.setHandler(for: base) { request in
       let url = try XCTUnwrap(request.url)
       let response = try XCTUnwrap(
         HTTPURLResponse(url: url, statusCode: 503, httpVersion: nil, headerFields: nil)
       )
       return (response, Data("upstream".utf8))
     }
-    defer { MockURLProtocol.handler = nil }
+    defer { MockURLProtocol.removeHandler(for: base) }
 
-    let base = try XCTUnwrap(URL(string: "http://127.0.0.1:7"))
     let config = HTTPNotesSummarizerConfig(
       provider: .ollama, model: "m", baseURL: base, apiKey: nil)
     let summarizer = HTTPNotesSummarizer(config: config, urlSession: makeMockSession())
@@ -209,7 +257,8 @@ final class HTTPNotesSummarizerTests: XCTestCase {
     ]
     let responseBody = try JSONSerialization.data(withJSONObject: envelope)
 
-    MockURLProtocol.handler = { request in
+    let base = mockBaseURL(testID: "ollama-prefs")
+    MockURLProtocol.setHandler(for: base) { request in
       let requestData = try XCTUnwrap(httpBodyData(from: request))
       let body = try JSONSerialization.jsonObject(with: requestData) as? [String: Any]
       let messages = try XCTUnwrap(body?["messages"] as? [[String: Any]])
@@ -226,9 +275,8 @@ final class HTTPNotesSummarizerTests: XCTestCase {
 
       return (response, responseBody)
     }
-    defer { MockURLProtocol.handler = nil }
+    defer { MockURLProtocol.removeHandler(for: base) }
 
-    let base = try XCTUnwrap(URL(string: "http://127.0.0.1:9"))
     let summarizer = HTTPNotesSummarizer(
       config: HTTPNotesSummarizerConfig(
         provider: .ollama,

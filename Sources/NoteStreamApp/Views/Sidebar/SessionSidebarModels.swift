@@ -117,7 +117,7 @@ extension LectureSession {
 
     if !segments.isEmpty {
       parts.append("\(segments.count) segments")
-      parts.append(TranscriptFormatting.formatDuration(transcriptDuration))
+      parts.append(DurationFormatting.playbackClock(transcriptDuration))
     } else {
       parts.append("No transcript")
     }

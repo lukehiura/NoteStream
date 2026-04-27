@@ -103,6 +103,7 @@ private actor StateActor {
     await publish(ModelStatus(model: lastStatus.model, state: .idle, detail: "Cache cleared"))
   }
 
+  // swiftlint:disable:next function_body_length
   func getPipe(model: String) async throws -> WhisperKit {
     while true {
       if let pipe, currentModel == model { return pipe }
