@@ -2,7 +2,7 @@
 
 All notable **user-facing** or **contributor-obvious** changes are documented here. [Releases](https://github.com/lukehiura/NoteStream/releases) ship developer preview zips unless stated otherwise.
 
-## [0.1.0-beta.4] - 2026-04-27
+## [0.1.0-beta.5] - 2026-04-27
 
 ### Added
 
@@ -19,6 +19,12 @@ All notable **user-facing** or **contributor-obvious** changes are documented he
 ### Fixed
 
 - External JSON adapter no longer blocks the task pool on certain CI `Process` timeout paths.
+
+## [0.1.0-beta.4] - 2026-04-27
+
+### Added
+
+- Initial `CHANGELOG.md` for developer previews.
 
 ## [0.1.0-beta.3] - 2026-04-26
 
