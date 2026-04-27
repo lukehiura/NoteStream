@@ -3,6 +3,10 @@
 # This is a developer preview artifact, not a Developer ID or notarized distribution.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+ICON_SRC="$REPO_ROOT/Packaging/AppIcon.icns"
+
 VERSION="${1:-dev}"
 APP_NAME="NoteStream"
 EXECUTABLE_NAME="NoteStream"
@@ -37,6 +41,12 @@ chmod +x "$MACOS_DIR/$EXECUTABLE_NAME"
 echo "Copying SwiftPM resource bundles..."
 find "$BIN_DIR" -maxdepth 1 -name "*.bundle" -type d -exec cp -R {} "$RESOURCES_DIR/" \;
 
+if [[ ! -f "$ICON_SRC" ]]; then
+  echo "Missing app icon at $ICON_SRC (build Packaging/AppIcon.icns; see Packaging/)." >&2
+  exit 1
+fi
+cp "$ICON_SRC" "$RESOURCES_DIR/"
+
 cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -53,6 +63,9 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 
     <key>CFBundleExecutable</key>
     <string>$EXECUTABLE_NAME</string>
+
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
 
     <key>CFBundlePackageType</key>
     <string>APPL</string>
