@@ -1018,7 +1018,12 @@ final class TranscriptionViewModel {
   private func rebuildSpeakerDiarizer() {
     if let injectedSpeakerDiarizer {
       speakerDiarizer = injectedSpeakerDiarizer
-      speakerDiarizerIsUsingDebugPlaceholder = (injectedSpeakerDiarizer is DebugSpeakerDiarizer)
+      #if DEBUG
+        speakerDiarizerIsUsingDebugPlaceholder =
+          (injectedSpeakerDiarizer is DebugSpeakerDiarizer)
+      #else
+        speakerDiarizerIsUsingDebugPlaceholder = false
+      #endif
       configureLiveSpeakerDiarizerAdapter()
       return
     }

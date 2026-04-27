@@ -14,7 +14,13 @@ make fast
 make test
 ```
 
-To build the same **developer preview** artifacts CI publishes (ad-hoc–signed zip + DMG, not notarized):
+To build the same **developer preview zip** CI publishes on GitHub Releases (ad-hoc–signed, not notarized):
+
+```bash
+make preview
+```
+
+Optional local **DMG** (not attached to GitHub Releases):
 
 ```bash
 make preview-dmg

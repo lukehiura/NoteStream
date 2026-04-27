@@ -74,6 +74,76 @@ final class ExternalJSONNotesSummarizerTests: XCTestCase {
       XCTAssertTrue(error.localizedDescription.contains("simulated adapter failure"))
     }
   }
+
+  /// Verifies stderr is drained concurrently with stdout so large stderr cannot deadlock the pipe buffer.
+  func testLargeStderrStillReturnsStdoutJSON() async throws {
+    let tmp = FileManager.default.temporaryDirectory
+      .appendingPathComponent("NoteStreamAdapterTests-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: tmp) }
+
+    let script = try writeExecutableScript(
+      directory: tmp,
+      name: "notes_big_stderr.sh",
+      contents: """
+        #!/bin/sh
+        cat >/dev/null
+        i=0
+        while [ "$i" -lt 4000 ]; do
+          echo "stderr padding xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" >&2
+          i=$((i + 1))
+        done
+        printf '%s\\n' '{"title":"BigStderr","summaryMarkdown":"ok","keyPoints":[],"actionItems":[],"openQuestions":[]}'
+        """
+    )
+
+    let summarizer = ExternalJSONNotesSummarizer(executableURL: script)
+    let result = try await summarizer.summarize(
+      NotesSummarizationRequest(
+        transcriptMarkdown: "hello",
+        previousNotesMarkdown: nil,
+        mode: .final
+      )
+    )
+
+    XCTAssertEqual(result.title, "BigStderr")
+    XCTAssertEqual(result.summaryMarkdown, "ok")
+  }
+
+  func testTimeoutThrows() async throws {
+    let tmp = FileManager.default.temporaryDirectory
+      .appendingPathComponent("NoteStreamAdapterTests-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: tmp) }
+
+    let script = try writeExecutableScript(
+      directory: tmp,
+      name: "notes_slow.sh",
+      contents: """
+        #!/bin/sh
+        cat >/dev/null
+        sleep 120
+        printf '%s\\n' '{"title":"Late","summaryMarkdown":"","keyPoints":[],"actionItems":[],"openQuestions":[]}'
+        """
+    )
+
+    let summarizer = ExternalJSONNotesSummarizer(executableURL: script, timeoutSeconds: 2)
+
+    do {
+      _ = try await summarizer.summarize(
+        NotesSummarizationRequest(
+          transcriptMarkdown: "hello",
+          previousNotesMarkdown: nil,
+          mode: .final
+        )
+      )
+      XCTFail("Expected summarize to throw on timeout")
+    } catch let error as NSError {
+      XCTAssertEqual(error.domain, "NoteStream")
+      XCTAssertEqual(error.code, 71)
+      XCTAssertTrue(error.localizedDescription.contains("timed out"))
+    }
+  }
 }
 
 final class ExternalJSONSpeakerDiarizerTests: XCTestCase {

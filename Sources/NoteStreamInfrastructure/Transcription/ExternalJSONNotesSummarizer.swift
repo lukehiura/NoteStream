@@ -5,48 +5,32 @@ import NoteStreamCore
 public final class ExternalJSONNotesSummarizer: NotesSummarizing, @unchecked Sendable {
   private let executableURL: URL
   private let diagnostics: any DiagnosticsLogging
+  private let timeoutSeconds: UInt64
 
   public init(
     executableURL: URL,
-    diagnostics: any DiagnosticsLogging = NoopDiagnosticsLogger()
+    diagnostics: any DiagnosticsLogging = NoopDiagnosticsLogger(),
+    timeoutSeconds: UInt64 = 120
   ) {
     self.executableURL = executableURL
     self.diagnostics = diagnostics
+    self.timeoutSeconds = timeoutSeconds
   }
 
   public func summarize(_ request: NotesSummarizationRequest) async throws -> NotesSummary {
-    let encoder = JSONEncoder()
-    let input = try encoder.encode(request)
-    let exePath = executableURL.path
+    let input = try JSONEncoder().encode(request)
 
-    let (exitStatus, outputData, errorData) = try await Task.detached(priority: .userInitiated) {
-      () throws -> (Int32, Data, Data) in
-      let process = Process()
-      process.executableURL = URL(fileURLWithPath: exePath)
-      process.arguments = []
+    let result = try await ExternalProcessRunner.run(
+      executableURL: executableURL,
+      stdin: input,
+      timeoutSeconds: timeoutSeconds
+    )
 
-      let stdin = Pipe()
-      let stdout = Pipe()
-      let stderr = Pipe()
-
-      process.standardInput = stdin
-      process.standardOutput = stdout
-      process.standardError = stderr
-
-      try process.run()
-
-      stdin.fileHandleForWriting.write(input)
-      try stdin.fileHandleForWriting.close()
-
-      process.waitUntilExit()
-
-      let out = stdout.fileHandleForReading.readDataToEndOfFile()
-      let err = stderr.fileHandleForReading.readDataToEndOfFile()
-      return (process.terminationStatus, out, err)
-    }.value
-
-    guard exitStatus == 0 else {
-      let message = String(data: errorData, encoding: .utf8) ?? "Unknown notes summarizer error"
+    guard result.terminationStatus == 0 else {
+      let message =
+        String(data: result.stderr, encoding: .utf8)?
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+        ?? "Unknown notes summarizer error"
 
       await diagnostics.log(
         .init(
@@ -63,8 +47,7 @@ public final class ExternalJSONNotesSummarizer: NotesSummarizing, @unchecked Sen
         ])
     }
 
-    let decoder = JSONDecoder()
-    let summary = try decoder.decode(NotesSummary.self, from: outputData)
+    let summary = try JSONDecoder().decode(NotesSummary.self, from: result.stdout)
 
     await diagnostics.log(
       .init(

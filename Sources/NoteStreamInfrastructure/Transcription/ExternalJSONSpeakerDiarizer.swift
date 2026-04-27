@@ -6,75 +6,57 @@ public final class ExternalJSONSpeakerDiarizer: SpeakerDiarizing, @unchecked Sen
   private let executableURL: URL
   private let diagnostics: any DiagnosticsLogging
   private let additionalEnvironment: [String: String]
+  private let timeoutSeconds: UInt64
 
   public init(
     executableURL: URL,
     additionalEnvironment: [String: String] = [:],
-    diagnostics: any DiagnosticsLogging = NoopDiagnosticsLogger()
+    diagnostics: any DiagnosticsLogging = NoopDiagnosticsLogger(),
+    timeoutSeconds: UInt64 = 300
   ) {
     self.executableURL = executableURL
     self.additionalEnvironment = additionalEnvironment
     self.diagnostics = diagnostics
+    self.timeoutSeconds = timeoutSeconds
   }
 
   public func diarize(
     audioURL: URL,
     expectedSpeakerCount: Int?
   ) async throws -> SpeakerDiarizationResult {
-    let exePath = executableURL.path
-    let audioPath = audioURL.path
-    let extraEnv = additionalEnvironment
-    let expectedCount = expectedSpeakerCount
+    var arguments = [
+      "--audio",
+      audioURL.path,
+    ]
 
-    let stdout = try await Task.detached(priority: .userInitiated) { () throws -> Data in
-      let process = Process()
-      process.executableURL = URL(fileURLWithPath: exePath)
+    if let expectedSpeakerCount {
+      arguments.append("--speakers")
+      arguments.append("\(expectedSpeakerCount)")
+    }
 
-      var args = [
-        "--audio",
-        audioPath,
-      ]
+    let result = try await ExternalProcessRunner.run(
+      executableURL: executableURL,
+      arguments: arguments,
+      additionalEnvironment: additionalEnvironment,
+      timeoutSeconds: timeoutSeconds
+    )
 
-      if let expectedCount {
-        args.append("--speakers")
-        args.append("\(expectedCount)")
-      }
+    guard result.terminationStatus == 0 else {
+      let message =
+        String(data: result.stderr, encoding: .utf8)?
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+        ?? "Unknown diarization error"
 
-      process.arguments = args
+      throw NSError(
+        domain: "NoteStream", code: 70,
+        userInfo: [
+          NSLocalizedDescriptionKey: "Speaker diarization failed: \(message)"
+        ])
+    }
 
-      var environment = ProcessInfo.processInfo.environment
-      for (key, value) in extraEnv {
-        environment[key] = value
-      }
-      process.environment = environment
-
-      let output = Pipe()
-      let errorPipe = Pipe()
-      process.standardOutput = output
-      process.standardError = errorPipe
-
-      try process.run()
-      process.waitUntilExit()
-
-      let out = output.fileHandleForReading.readDataToEndOfFile()
-      let err = errorPipe.fileHandleForReading.readDataToEndOfFile()
-
-      guard process.terminationStatus == 0 else {
-        let message = String(data: err, encoding: .utf8) ?? "Unknown diarization error"
-        throw NSError(
-          domain: "NoteStream", code: 70,
-          userInfo: [
-            NSLocalizedDescriptionKey: "Speaker diarization failed: \(message)"
-          ])
-      }
-
-      return out
-    }.value
-
-    let decoder = JSONDecoder()
-    let rawTurns = try decoder.decode([SpeakerTurn].self, from: stdout)
+    let rawTurns = try JSONDecoder().decode([SpeakerTurn].self, from: result.stdout)
     let normalized = Self.normalizedTurns(rawTurns)
-    let result = SpeakerDiarizationResult(turns: normalized)
+    let output = SpeakerDiarizationResult(turns: normalized)
 
     await diagnostics.log(
       .init(
@@ -82,12 +64,12 @@ public final class ExternalJSONSpeakerDiarizer: SpeakerDiarizing, @unchecked Sen
         category: "diarization",
         message: "external_diarizer_completed",
         metadata: [
-          "turns": "\(result.turns.count)",
-          "speakers": "\(result.speakerCount)",
+          "turns": "\(output.turns.count)",
+          "speakers": "\(output.speakerCount)",
         ]
       ))
 
-    return result
+    return output
   }
 
   private static func normalizedTurns(_ turns: [SpeakerTurn]) -> [SpeakerTurn] {

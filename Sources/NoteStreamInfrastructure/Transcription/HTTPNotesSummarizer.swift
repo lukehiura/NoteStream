@@ -24,17 +24,7 @@ public struct HTTPNotesSummarizerConfig: Sendable {
 public actor HTTPNotesSummarizer: NotesSummarizing {
   private let config: HTTPNotesSummarizerConfig
   private let diagnostics: any DiagnosticsLogging
-  private let urlSession: URLSession
-
-  private static func openAICompatibleChatURL(from base: URL) -> URL {
-    var s = base.absoluteString.trimmingCharacters(in: .whitespacesAndNewlines)
-    while s.hasSuffix("/") { s.removeLast() }
-    let composed =
-      s.hasSuffix("/v1")
-      ? s + "/chat/completions"
-      : s + "/v1/chat/completions"
-    return URL(string: composed) ?? base
-  }
+  private let llmClient: LLMHTTPClient
 
   public init(
     config: HTTPNotesSummarizerConfig,
@@ -43,7 +33,11 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
   ) {
     self.config = config
     self.diagnostics = diagnostics
-    self.urlSession = urlSession
+    self.llmClient = LLMHTTPClient(
+      urlSession: urlSession,
+      diagnostics: diagnostics,
+      category: "notes"
+    )
   }
 
   public func summarize(_ request: NotesSummarizationRequest) async throws -> NotesSummary {
@@ -242,56 +236,12 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
     return try JSONDecoder().decode(NotesSummary.self, from: data)
   }
 
-  private func runJSONRequest(url: URL, headers: [String: String], body: [String: Any]) async throws
-    -> Data
-  {
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    request.timeoutInterval = 90
-
-    for (key, value) in headers {
-      request.setValue(value, forHTTPHeaderField: key)
-    }
-
-    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-    await diagnostics.log(
-      .init(
-        level: .info,
-        category: "notes",
-        message: "http_summarizer_request",
-        metadata: ["url": url.absoluteString]
-      ))
-
-    let (data, response) = try await urlSession.data(for: request)
-
-    if let http = response as? HTTPURLResponse,
-      !(200..<300).contains(http.statusCode)
-    {
-      let text = String(data: data, encoding: .utf8) ?? ""
-      throw NSError(
-        domain: "NoteStream", code: http.statusCode,
-        userInfo: [
-          NSLocalizedDescriptionKey: "LLM request failed with HTTP \(http.statusCode): \(text)"
-        ])
-    }
-
-    return data
-  }
-
   // MARK: - Ollama
 
   private func summarizeWithOllama(_ request: NotesSummarizationRequest) async throws
     -> NotesSummary
   {
-    guard let base = config.baseURL ?? URL(string: "http://localhost:11434") else {
-      throw NSError(
-        domain: "NoteStream", code: 93,
-        userInfo: [NSLocalizedDescriptionKey: "Invalid Ollama base URL."]
-      )
-    }
-    let url = base.appendingPathComponent("api").appendingPathComponent("chat")
+    let url = try LLMEndpointBuilder.ollamaChat(baseURL: config.baseURL)
 
     let body: [String: Any] = [
       "model": config.model,
@@ -310,19 +260,8 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
       ],
     ]
 
-    let data = try await runJSONRequest(url: url, headers: [:], body: body)
-
-    let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-    let message = root?["message"] as? [String: Any]
-    let content = message?["content"] as? String
-
-    guard let content else {
-      throw NSError(
-        domain: "NoteStream", code: 92,
-        userInfo: [
-          NSLocalizedDescriptionKey: "Ollama response did not contain message.content."
-        ])
-    }
+    let data = try await llmClient.postJSON(url: url, headers: [:], body: body)
+    let content = try LLMResponseExtractor.ollamaMessageContent(from: data)
 
     let summary = try decodeNotesFromJSONText(content)
     await diagnostics.log(
@@ -347,13 +286,7 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
         ])
     }
 
-    guard let url = URL(string: "https://api.openai.com/v1/responses") else {
-      throw NSError(
-        domain: "NoteStream", code: 93,
-        userInfo: [
-          NSLocalizedDescriptionKey: "Invalid OpenAI URL."
-        ])
-    }
+    let url = try LLMEndpointBuilder.openAIResponses()
 
     let body: [String: Any] = [
       "model": config.model,
@@ -378,7 +311,7 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
       ],
     ]
 
-    let data = try await runJSONRequest(
+    let data = try await llmClient.postJSON(
       url: url,
       headers: [
         "Authorization": "Bearer \(apiKey)"
@@ -386,46 +319,13 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
       body: body
     )
 
-    let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-
-    if let text = extractTextFromOpenAIResponses(root) {
-      let summary = try decodeNotesFromJSONText(text)
-      await diagnostics.log(
-        .init(
-          level: .info, category: "notes", message: "openai_notes_ok",
-          metadata: ["title": summary.title]))
-      return summary
-    }
-
-    if let text = extractTextFromOpenAIChat(root) {
-      let summary = try decodeNotesFromJSONText(text)
-      await diagnostics.log(
-        .init(
-          level: .info, category: "notes", message: "openai_notes_ok",
-          metadata: ["title": summary.title]))
-      return summary
-    }
-
-    throw NSError(
-      domain: "NoteStream", code: 95,
-      userInfo: [
-        NSLocalizedDescriptionKey: "OpenAI response did not contain usable JSON text."
-      ])
-  }
-
-  private func extractTextFromOpenAIResponses(_ root: [String: Any]?) -> String? {
-    guard let root, let output = root["output"] as? [[String: Any]] else { return nil }
-    var parts: [String] = []
-    for item in output {
-      guard let content = item["content"] as? [[String: Any]] else { continue }
-      for block in content {
-        if let t = block["text"] as? String {
-          parts.append(t)
-        }
-      }
-    }
-    let joined = parts.joined(separator: "\n")
-    return joined.isEmpty ? nil : joined
+    let text = try LLMResponseExtractor.openAINotesText(from: data)
+    let summary = try decodeNotesFromJSONText(text)
+    await diagnostics.log(
+      .init(
+        level: .info, category: "notes", message: "openai_notes_ok",
+        metadata: ["title": summary.title]))
+    return summary
   }
 
   // MARK: - OpenAI-compatible (Chat Completions + JSON)
@@ -433,15 +333,10 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
   private func summarizeWithOpenAIChatCompletions(_ request: NotesSummarizationRequest) async throws
     -> NotesSummary
   {
-    guard let base = config.baseURL else {
-      throw NSError(
-        domain: "NoteStream", code: 93,
-        userInfo: [
-          NSLocalizedDescriptionKey: "OpenAI compatible base URL is missing."
-        ])
-    }
-
-    let url = Self.openAICompatibleChatURL(from: base)
+    let url = try LLMEndpointBuilder.openAICompatibleChat(
+      provider: .openAICompatible,
+      baseURL: config.baseURL
+    )
 
     var headers: [String: String] = [:]
     if let key = config.apiKey?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty {
@@ -469,16 +364,9 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
       ],
     ]
 
-    let data = try await runJSONRequest(url: url, headers: headers, body: body)
+    let data = try await llmClient.postJSON(url: url, headers: headers, body: body)
 
-    let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-    guard let text = extractTextFromOpenAIChat(root) else {
-      throw NSError(
-        domain: "NoteStream", code: 95,
-        userInfo: [
-          NSLocalizedDescriptionKey: "OpenAI compatible response did not contain message content."
-        ])
-    }
+    let text = try LLMResponseExtractor.openAIChatContent(from: data)
 
     let summary = try decodeNotesFromJSONText(text)
     await diagnostics.log(
@@ -486,15 +374,6 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
         level: .info, category: "notes", message: "openai_compatible_notes_ok",
         metadata: ["title": summary.title]))
     return summary
-  }
-
-  private func extractTextFromOpenAIChat(_ root: [String: Any]?) -> String? {
-    guard let root,
-      let choices = root["choices"] as? [[String: Any]],
-      let message = choices.first?["message"] as? [String: Any],
-      let content = message["content"] as? String
-    else { return nil }
-    return content
   }
 
   // MARK: - Anthropic
@@ -512,13 +391,7 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
         ])
     }
 
-    guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
-      throw NSError(
-        domain: "NoteStream", code: 93,
-        userInfo: [
-          NSLocalizedDescriptionKey: "Invalid Anthropic URL."
-        ])
-    }
+    let url = try LLMEndpointBuilder.anthropicMessages()
 
     let body: [String: Any] = [
       "model": config.model,
@@ -544,7 +417,7 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
       ],
     ]
 
-    let data = try await runJSONRequest(
+    let data = try await llmClient.postJSON(
       url: url,
       headers: [
         "x-api-key": apiKey,
@@ -553,19 +426,7 @@ public actor HTTPNotesSummarizer: NotesSummarizing {
       body: body
     )
 
-    let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-    let contentBlocks = root?["content"] as? [[String: Any]]
-    let text = contentBlocks?
-      .compactMap { $0["text"] as? String }
-      .joined(separator: "\n")
-
-    guard let text, !text.isEmpty else {
-      throw NSError(
-        domain: "NoteStream", code: 97,
-        userInfo: [
-          NSLocalizedDescriptionKey: "Anthropic response did not contain text."
-        ])
-    }
+    let text = try LLMResponseExtractor.anthropicText(from: data)
 
     let summary = try decodeNotesFromJSONText(text)
     await diagnostics.log(
