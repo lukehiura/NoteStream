@@ -29,6 +29,8 @@ av tree                             # show stack and PR links
 
 After a parent PR merges, **`av sync`** fetches, restacks descendants onto `main`, and prompts about push and deleting merged local branches.
 
+**Stacking another PR on an open branch:** check out the branch that already has a PR, run **`av branch your-next-topic`**, commit, then **`av pr`**. GitHub only allows one open PR per head branch, so a second PR must use a **new branch**. To refresh the existing PR, push the same branch (**`git push`**); you do not run **`av pr`** again to “create” it.
+
 Branches you created with plain **`git switch -c`** before using `av` are not tracked until you run **`av adopt`** (optionally `--parent main`) so `av tree` includes them. If **`av commit`** prints *current branch is not adopted* after committing, the commit still recorded; adopt the branch once, then later **`av commit`** runs will restack children as usual.
 
 Shell completion (zsh): `source <(av completion zsh)` (Homebrew installs completion under `/opt/homebrew/share/zsh/site-functions` for `av`).
