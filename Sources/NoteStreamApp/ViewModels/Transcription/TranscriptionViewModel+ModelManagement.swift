@@ -221,14 +221,16 @@ extension TranscriptionViewModel {
   /// Wraps the batch diarizer in a rolling-window live adapter when a real (non-debug) diarizer exists.
   func configureLiveSpeakerDiarizerAdapter() {
     if let speakerDiarizer, !speakerDiarizerIsUsingDebugPlaceholder {
-      liveSpeakerDiarizer = RollingWindowSpeakerDiarizer(
-        batchDiarizer: speakerDiarizer,
-        windowSeconds: 60,
-        minIntervalSeconds: 20,
-        diagnostics: diagnostics
+      liveSpeaker.setDiarizer(
+        RollingWindowSpeakerDiarizer(
+          batchDiarizer: speakerDiarizer,
+          windowSeconds: 60,
+          minIntervalSeconds: 20,
+          diagnostics: diagnostics
+        )
       )
     } else {
-      liveSpeakerDiarizer = nil
+      liveSpeaker.setDiarizer(nil)
     }
   }
 

@@ -248,8 +248,13 @@ final class TranscriptionViewModel {
     }
   }
 
-  var liveSpeakerStatusText: String?
-  var isLiveSpeakerDiarizationActive: Bool = false
+  let liveSpeaker = LiveSpeakerCoordinator()
+
+  var isLiveSpeakerDiarizationActive: Bool { liveSpeaker.isActive }
+  var liveSpeakerStatusText: String? {
+    get { liveSpeaker.statusText }
+    set { liveSpeaker.statusText = newValue }
+  }
 
   /// Toolbar / compact label for the speaker control (distinguishes debug vs real vs off).
   var speakerToolbarTitle: String {
@@ -682,10 +687,7 @@ final class TranscriptionViewModel {
   var speakerDiarizer: (any SpeakerDiarizing)?
   var speakerDiarizerIsUsingDebugPlaceholder: Bool
   var notesSummarizer: (any NotesSummarizing)?
-  // Live notes state is owned by `liveNotes`.
-  var liveSpeakerDiarizer: (any LiveSpeakerDiarizing)?
-  var liveSpeakerTurns: [SpeakerTurn] = []
-  var liveDiarizationTask: Task<Void, Never>?
+  // Live notes state is owned by `liveNotes`. Live speaker state is owned by `liveSpeaker`.
 
   /// True only while the capture UI is in the steady recording state (not starting or finalizing).
   var isRecording: Bool {
@@ -869,6 +871,18 @@ final class TranscriptionViewModel {
       self.topicTimeline = summary.topicTimeline ?? self.topicTimeline
     }
     liveNotes.onError = { [weak self] error in
+      self?.rollingLastError = String(describing: error)
+    }
+
+    liveSpeaker.onRelabel = { [weak self] recentIDs, relabeledByID in
+      self?.mutateAllSegmentBuckets { segment in
+        if recentIDs.contains(segment.id), let updated = relabeledByID[segment.id] {
+          return updated
+        }
+        return segment
+      }
+    }
+    liveSpeaker.onError = { [weak self] error in
       self?.rollingLastError = String(describing: error)
     }
 

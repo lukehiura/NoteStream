@@ -141,125 +141,25 @@ extension TranscriptionViewModel {
   }
 
   func startLiveSpeakerDiarizationIfNeededAsync() async {
-    guard liveSpeakerDiarizationEnabled else {
-      isLiveSpeakerDiarizationActive = false
-      liveSpeakerStatusText = nil
+    guard liveSpeakerDiarizationEnabled, speakerDiarizationEnabled else {
+      await liveSpeaker.stop()
       return
     }
-    guard speakerDiarizationEnabled else {
-      isLiveSpeakerDiarizationActive = false
-      liveSpeakerStatusText = nil
-      return
-    }
-    guard let diarizer = liveSpeakerDiarizer else {
-      isLiveSpeakerDiarizationActive = false
-      liveSpeakerStatusText = "Live speaker labels require a real diarizer tool."
-      return
-    }
-
-    liveSpeakerTurns = []
-    isLiveSpeakerDiarizationActive = true
-    liveSpeakerStatusText = "Live speaker labeling active"
-
-    do {
-      try await diarizer.start(expectedSpeakerCount: expectedSpeakerCount)
-    } catch {
-      liveSpeakerStatusText = "Live speaker setup failed."
-      isLiveSpeakerDiarizationActive = false
-    }
+    await liveSpeaker.start(expectedSpeakerCount: expectedSpeakerCount)
   }
 
   func stopLiveSpeakerDiarizationAsync() async {
-    liveDiarizationTask?.cancel()
-    liveDiarizationTask = nil
-    isLiveSpeakerDiarizationActive = false
-
-    if let diarizer = liveSpeakerDiarizer {
-      _ = try? await diarizer.finish()
-      await diarizer.reset()
-    }
-
-    liveSpeakerTurns = []
-    liveSpeakerStatusText = nil
+    await liveSpeaker.stop()
   }
 
   func stopLiveSpeakerDiarizationSync() {
-    liveDiarizationTask?.cancel()
-    liveDiarizationTask = nil
-    isLiveSpeakerDiarizationActive = false
-    liveSpeakerTurns = []
-    liveSpeakerStatusText = nil
-    let diarizer = liveSpeakerDiarizer
-    Task {
-      await diarizer?.reset()
-    }
+    liveSpeaker.stopSync()
   }
 
   func scheduleLiveDiarizationFrame(_ frame: AudioFrame) {
-    guard liveSpeakerDiarizationEnabled,
-      speakerDiarizationEnabled,
-      isLiveSpeakerDiarizationActive,
-      let diarizer = liveSpeakerDiarizer
-    else { return }
-
-    Task.detached(priority: .utility) { [weak self] in
-      do {
-        guard let update = try await diarizer.ingest(frame: frame) else { return }
-        await MainActor.run { [weak self] in
-          self?.applyLiveSpeakerDiarizationUpdate(update)
-        }
-      } catch {
-        await MainActor.run { [weak self] in
-          self?.liveSpeakerStatusText =
-            "Live speaker update failed: \(error.localizedDescription)"
-        }
-      }
-    }
-  }
-
-  func applyLiveSpeakerDiarizationUpdate(_ update: LiveSpeakerDiarizationUpdate) {
-    mergeLiveSpeakerTurns(update.turns)
-    applyLiveSpeakerLabelsToRecentSegments(windowStart: update.windowStartTime)
-  }
-
-  func mergeLiveSpeakerTurns(_ newTurns: [SpeakerTurn]) {
-    guard !newTurns.isEmpty else { return }
-
-    let minStart = newTurns.map(\.startTime).min() ?? 0
-    let maxEnd = newTurns.map(\.endTime).max() ?? minStart
-
-    liveSpeakerTurns.removeAll { turn in
-      !(turn.endTime <= minStart || turn.startTime >= maxEnd)
-    }
-
-    liveSpeakerTurns.append(contentsOf: newTurns)
-    liveSpeakerTurns.sort { $0.startTime < $1.startTime }
-  }
-
-  func applyLiveSpeakerLabelsToRecentSegments(windowStart: TimeInterval) {
-    guard !liveSpeakerTurns.isEmpty else { return }
-
-    let labels = defaultSpeakerLabels(for: liveSpeakerTurns)
-
-    let recentSegments =
-      liveTranscriptSegments
-      .filter { $0.endTime >= windowStart }
-
-    let recentIDs = Set(recentSegments.map(\.id))
-
-    let relabeledRecent = SpeakerTurnAligner.assignSpeakers(
-      segments: recentSegments,
-      turns: liveSpeakerTurns,
-      speakerLabels: labels
-    )
-
-    let relabeledByID = Dictionary(uniqueKeysWithValues: relabeledRecent.map { ($0.id, $0) })
-
-    mutateAllSegmentBuckets { segment in
-      if recentIDs.contains(segment.id), let updated = relabeledByID[segment.id] {
-        return updated
-      }
-      return segment
+    guard speakerDiarizationEnabled else { return }
+    liveSpeaker.ingest(frame: frame) { [weak self] in
+      self?.liveTranscriptSegments ?? []
     }
   }
 
