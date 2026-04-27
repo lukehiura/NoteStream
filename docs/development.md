@@ -6,6 +6,35 @@
 make bootstrap
 ```
 
+### Stacked PRs (Aviator CLI, optional)
+
+[Aviator `av`](https://github.com/aviator-co/av) sits on top of Git: it tracks branch parent/child relationships in `.git/av/av.db` so you can open **stacked** pull requests, restack after merges, and run `av sync` instead of hand-rebasing chains of branches. It uses the same GitHub token as **`gh`** when `gh` is installed and authenticated (`gh auth login`).
+
+**One-time per clone** (after `git clone`):
+
+```bash
+av init
+```
+
+**Typical flow** (from `main`):
+
+```bash
+git switch main && git pull
+av branch my-feature          # or: av commit -A -m "msg" --branch-name my-feature
+# edit, then:
+av commit -A -m "Describe change"   # restacks children; use -a/--all like git
+av pr                               # create or update PR for current branch
+av tree                             # show stack and PR links
+```
+
+After a parent PR merges, **`av sync`** fetches, restacks descendants onto `main`, and prompts about push and deleting merged local branches.
+
+Branches you created with plain **`git switch -c`** before using `av` are not tracked until you run **`av adopt`** (optionally `--parent main`) so `av tree` includes them. If **`av commit`** prints *current branch is not adopted* after committing, the commit still recorded; adopt the branch once, then later **`av commit`** runs will restack children as usual.
+
+Shell completion (zsh): `source <(av completion zsh)` (Homebrew installs completion under `/opt/homebrew/share/zsh/site-functions` for `av`).
+
+Full reference: [Aviator CLI docs](https://docs.aviator.co/aviator-cli/).
+
 ## Daily workflow
 
 ```bash
