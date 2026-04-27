@@ -449,20 +449,19 @@ swift build
 make test
 ```
 
-(`make test` / **`make test-fast`** run XCTest with **`--disable-swift-testing`**. CI runs **`scripts/ci-check.sh`**, which includes **`make test-coverage`**. Prefer these targets over a bare `swift test` on Swift 6 toolchains.)
+(`make test` / **`make test-fast`** run XCTest with **`--disable-swift-testing`**. PR CI runs fast-check, **`swift build`**, and **`make test-fast`** only; coverage is **nightly / manual** (`.github/workflows/nightly-coverage.yml`). Tagged previews run **`scripts/release-verify.sh`** (includes **`make test-coverage`**). Prefer these targets over a bare `swift test` on Swift 6 toolchains.)
 
 ### Continuous integration
 
-The CI pipeline checks:
+The **PR** CI pipeline checks:
 
-- Swift build
-- Swift tests
-- code coverage
-- Swift formatting
-- SwiftLint
-- Markdown linting
-- obvious API key leaks
-- committed recording/session artifacts
+- Swift debug build
+- Fast XCTest suite (no coverage)
+- Swift formatting, SwiftLint, Markdown lint, ShellCheck, actionlint
+- Python helper `py_compile`
+- Obvious API key patterns and forbidden recording artifacts
+
+Coverage runs on a **nightly** schedule and **workflow_dispatch** (see `.github/workflows/nightly-coverage.yml`). **Tagged** developer previews run a heavier script (`scripts/release-verify.sh`) before building the zip.
 
 ### Storage layout
 

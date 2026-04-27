@@ -1,4 +1,4 @@
-.PHONY: bootstrap hooks doctor fast check release-check build release test test-fast test-core test-infra test-coverage test-one ci-check lint format markdownlint python-tools-check shellcheck actionlint quality preview preview-version preview-dmg preview-dmg-version gh-harden run clean
+.PHONY: bootstrap hooks doctor fast check release-check release-verify build release test test-fast test-core test-infra test-coverage test-one ci-check lint format markdownlint python-tools-check shellcheck actionlint quality preview preview-version preview-dmg preview-dmg-version gh-harden run clean
 
 bootstrap:
 	scripts/bootstrap.sh
@@ -20,6 +20,10 @@ release-check: fast check preview
 
 ci-check:
 	scripts/ci-check.sh
+
+# Same gate as developer-preview tags: clean, release build, coverage tests.
+release-verify:
+	scripts/release-verify.sh
 
 build:
 	swift build

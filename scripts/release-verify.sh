@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Local / optional "full" check without coverage: mirrors PR CI plus release compile.
-# For coverage, use `make test-coverage` or the nightly workflow. Tagged releases use
-# scripts/release-verify.sh (coverage + clean + release build).
+# Pre–developer-preview tag gate: lint, clean (fresh SwiftPM test harness), debug + release
+# builds, tests with coverage, Python helpers.
 set -euo pipefail
 
 section() {
@@ -17,16 +16,19 @@ scripts/fast-check.sh
 section "Resolve"
 swift package resolve
 
+section "Clean SwiftPM build"
+swift package clean
+
 section "Build debug"
 swift build
 
 section "Build release"
 swift build -c release
 
-section "Fast tests"
-make test-fast
+section "Tests with coverage"
+make test-coverage
 
 section "Python tools"
 make python-tools-check
 
-section "CI check passed"
+section "Release verify passed"

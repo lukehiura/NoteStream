@@ -17,7 +17,7 @@ Tag format must match semver-style `vMAJOR.MINOR.PATCH` or `vMAJOR.MINOR.PATCH-p
 
 ## Before tagging (quality bar)
 
-- [ ] `make check` (debug build + fast tests) or **`make ci-check`** / push to CI for release build + coverage
+- [ ] `make check` (debug build + fast tests), or **`make ci-check`** (adds release compile), or **`make release-verify`** to mirror the tag workflow (clean + coverage); confirm PR CI and/or nightly coverage as needed
 - [ ] Build + run the app locally (from source or from the preview zip)
 - [ ] Run `docs/manual-smoke-test.md` when making meaningful changes
 - [ ] Verify first-run setup, Screen Recording permission, system audio capture, Stop & Transcribe, import audio, save/load sessions, exports, AI off by default, diagnostics export safety

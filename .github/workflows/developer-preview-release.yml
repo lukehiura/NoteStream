@@ -52,9 +52,9 @@ jobs:
             exit 1
           fi
 
-      - name: Run CI checks (release build + coverage)
+      - name: Release verify (clean, release build, coverage)
         timeout-minutes: 25
-        run: scripts/ci-check.sh
+        run: scripts/release-verify.sh
 
       - name: Build developer preview zip
         run: |

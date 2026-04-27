@@ -16,6 +16,7 @@ jobs:
   swift-checks:
     name: Swift checks
     runs-on: macos-15
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -40,9 +41,25 @@ jobs:
         run: |
           brew install swift-format swiftlint markdownlint-cli shellcheck actionlint
 
-      - name: CI check
-        timeout-minutes: 20
-        run: scripts/ci-check.sh
+      - name: Fast check
+        timeout-minutes: 3
+        run: scripts/fast-check.sh
+
+      - name: Resolve packages
+        timeout-minutes: 5
+        run: swift package resolve
+
+      - name: Build debug
+        timeout-minutes: 8
+        run: swift build
+
+      - name: Run fast tests
+        timeout-minutes: 5
+        run: make test-fast
+
+      - name: Python tools check
+        timeout-minutes: 1
+        run: make python-tools-check
 
       - name: Upload debug build artifacts
         if: success()

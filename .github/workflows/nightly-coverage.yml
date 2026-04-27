@@ -1,0 +1,41 @@
+name: Nightly coverage
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 10 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-coverage
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: XCTest with coverage
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Cache SwiftPM
+        uses: actions/cache@v5
+        with:
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-coverage-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-coverage-
+
+      - name: Resolve packages
+        timeout-minutes: 5
+        run: swift package resolve
+
+      - name: Coverage tests
+        timeout-minutes: 15
+        run: make test-coverage

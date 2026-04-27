@@ -13,7 +13,7 @@ All notable changes to this project are documented here. Releases are [developer
 - Refactored transcription-related infrastructure: shared external-process runner (timeout, concurrent stdout/stderr), shared LLM HTTP client / endpoints / response parsing for summarization and recording Q&A.
 - GitHub developer preview releases ship a **zip only**; DMG remains available via `make preview-dmg` locally.
 - `DebugSpeakerDiarizer` is available only in **DEBUG** builds.
-- Lighter local checks: `make test` defaults to fast XCTest without coverage; `scripts/ci-check.sh` for CI and tagged releases; quieter CI builds (no `swift -v` spam).
+- Lighter local checks: `make test` defaults to fast XCTest without coverage; PR CI uses explicit fast steps (no coverage zip); nightly workflow for `make test-coverage`; `scripts/release-verify.sh` before tagged releases; quieter builds (no `swift -v` spam).
 
 ### Fixed
 
