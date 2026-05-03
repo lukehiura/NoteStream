@@ -21,7 +21,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/argmaxinc/WhisperKit", from: "0.18.0")
+        .package(url: "https://github.com/argmaxinc/WhisperKit", from: "1.0.0")
     ],
     targets: [
         .target(
